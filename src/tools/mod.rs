@@ -387,11 +387,16 @@ pub fn all_tools_with_runtime(
                     .unwrap_or("me")
                     .to_string(),
             };
-            tool_arcs.push(Arc::new(Microsoft365Tool::new(
-                resolved,
-                security.clone(),
-                workspace_dir,
-            )));
+            // Store token cache in the config directory (next to config.toml),
+            // not the workspace directory, to keep bearer tokens out of the
+            // project tree.
+            let cache_dir = root_config.config_path.parent().unwrap_or(workspace_dir);
+            match Microsoft365Tool::new(resolved, security.clone(), cache_dir) {
+                Ok(tool) => tool_arcs.push(Arc::new(tool)),
+                Err(e) => {
+                    tracing::error!("microsoft365: failed to initialize tool: {e}");
+                }
+            }
         } else {
             tracing::warn!(
                 "microsoft365: skipped registration because tenant_id or client_id is empty"

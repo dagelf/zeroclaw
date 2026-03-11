@@ -1,6 +1,8 @@
 use anyhow::Context;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 
 /// Cached OAuth2 token state persisted to disk between runs.
@@ -31,14 +33,30 @@ impl TokenCache {
     pub fn new(
         config: super::types::Microsoft365ResolvedConfig,
         zeroclaw_dir: &std::path::Path,
-    ) -> Self {
-        let cache_path = zeroclaw_dir.join("ms365_token_cache.json");
+    ) -> anyhow::Result<Self> {
+        if config.token_cache_encrypted {
+            anyhow::bail!(
+                "microsoft365: token_cache_encrypted is enabled but encryption is not yet \
+                 implemented; refusing to store tokens in plaintext. Set token_cache_encrypted \
+                 to false or wait for encryption support."
+            );
+        }
+
+        // Scope cache file to (tenant_id, client_id, auth_flow) so config
+        // changes never reuse tokens from a different account/flow.
+        let mut hasher = DefaultHasher::new();
+        config.tenant_id.hash(&mut hasher);
+        config.client_id.hash(&mut hasher);
+        config.auth_flow.hash(&mut hasher);
+        let fingerprint = format!("{:016x}", hasher.finish());
+
+        let cache_path = zeroclaw_dir.join(format!("ms365_token_cache_{fingerprint}.json"));
         let cached = Self::load_from_disk(&cache_path);
-        Self {
+        Ok(Self {
             inner: RwLock::new(cached),
             config,
             cache_path,
-        }
+        })
     }
 
     /// Get a valid access token, refreshing or re-authenticating as needed.
