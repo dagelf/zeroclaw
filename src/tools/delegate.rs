@@ -70,6 +70,8 @@ pub struct DelegateTool {
     workspace_dir: PathBuf,
     /// Cancellation token for cascade control of background tasks.
     cancellation_token: CancellationToken,
+    /// Per-task cancellation tokens for individual background task cancellation.
+    task_tokens: Arc<RwLock<HashMap<String, CancellationToken>>>,
 }
 
 impl DelegateTool {
@@ -103,6 +105,7 @@ impl DelegateTool {
             delegate_config: DelegateToolConfig::default(),
             workspace_dir: PathBuf::new(),
             cancellation_token: CancellationToken::new(),
+            task_tokens: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -142,6 +145,7 @@ impl DelegateTool {
             delegate_config: DelegateToolConfig::default(),
             workspace_dir: PathBuf::new(),
             cancellation_token: CancellationToken::new(),
+            task_tokens: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -604,6 +608,12 @@ impl DelegateTool {
         let child_token = self.cancellation_token.child_token();
         let task_id_clone = task_id.clone();
 
+        // Store the per-task token so cancel_task can cancel this specific task.
+        self.task_tokens
+            .write()
+            .insert(task_id.clone(), child_token.clone());
+        let task_tokens = Arc::clone(&self.task_tokens);
+
         tokio::spawn(async move {
             // Build an inner DelegateTool for the spawned context
             let inner = DelegateTool {
@@ -617,6 +627,7 @@ impl DelegateTool {
                 delegate_config,
                 workspace_dir: workspace_dir.clone(),
                 cancellation_token: child_token.clone(),
+                task_tokens: Arc::new(RwLock::new(HashMap::new())),
             };
 
             let args_inner = json!({
@@ -676,6 +687,9 @@ impl DelegateTool {
             if let Ok(bytes) = serde_json::to_vec_pretty(&final_result) {
                 let _ = tokio::fs::write(&result_path, &bytes).await;
             }
+
+            // Remove the per-task token now that the task has finished.
+            task_tokens.write().remove(&task_id_clone);
         });
 
         Ok(ToolResult {
@@ -774,6 +788,7 @@ impl DelegateTool {
                     delegate_config,
                     workspace_dir,
                     cancellation_token,
+                    task_tokens: Arc::new(RwLock::new(HashMap::new())),
                 };
                 let result = Box::pin(inner.execute_sync(&agent_name, &prompt, &args_clone)).await;
                 (agent_name, result)
@@ -935,11 +950,16 @@ impl DelegateTool {
             });
         }
 
-        // Cancel via the parent token — this will cascade to all child tokens
-        // Note: individual task cancellation uses the shared parent token, which
-        // cancels all background tasks. For per-task cancellation, each background
-        // task uses a child token, and the parent token cancels all.
-        // We update the result file to reflect the cancellation request.
+        // Cancel via the per-task token so only this specific task is cancelled.
+        // The spawned task races against child_token.cancelled() in tokio::select!,
+        // so signalling the token will cause it to exit with a "Cancelled" error
+        // and persist the final status itself.
+        if let Some(token) = self.task_tokens.write().remove(task_id) {
+            token.cancel();
+        }
+
+        // Also update the result file immediately so a subsequent check_result
+        // reflects the cancellation even before the spawned task re-writes.
         result.status = BackgroundTaskStatus::Cancelled;
         result.error = Some("Cancelled by user request".into());
         result.finished_at = Some(chrono::Utc::now().to_rfc3339());
