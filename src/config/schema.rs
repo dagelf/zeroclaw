@@ -10836,26 +10836,25 @@ mod tests {
     use std::sync::{Arc, Mutex as StdMutex};
     use tempfile::TempDir;
     use tokio::sync::{Mutex, MutexGuard};
-    use tokio::test;
     use tokio_stream::wrappers::ReadDirStream;
     use tokio_stream::StreamExt;
 
     // ── Tilde expansion ───────────────────────────────────────
 
     #[test]
-    async fn expand_tilde_path_handles_absolute_path() {
+    fn expand_tilde_path_handles_absolute_path() {
         let path = expand_tilde_path("/absolute/path");
         assert_eq!(path, PathBuf::from("/absolute/path"));
     }
 
     #[test]
-    async fn expand_tilde_path_handles_relative_path() {
+    fn expand_tilde_path_handles_relative_path() {
         let path = expand_tilde_path("relative/path");
         assert_eq!(path, PathBuf::from("relative/path"));
     }
 
     #[test]
-    async fn expand_tilde_path_expands_tilde_when_home_set() {
+    fn expand_tilde_path_expands_tilde_when_home_set() {
         // This test verifies that tilde expansion works when HOME is set.
         // In normal environments, HOME is set, so ~ should expand.
         let path = expand_tilde_path("~/.zeroclaw");
@@ -10905,7 +10904,7 @@ mod tests {
     }
 
     #[test]
-    async fn http_request_config_default_has_correct_values() {
+    fn http_request_config_default_has_correct_values() {
         let cfg = HttpRequestConfig::default();
         assert_eq!(cfg.timeout_secs, 30);
         assert_eq!(cfg.max_response_size, 1_000_000);
@@ -10914,7 +10913,7 @@ mod tests {
     }
 
     #[test]
-    async fn config_default_has_sane_values() {
+    fn config_default_has_sane_values() {
         let c = Config::default();
         assert_eq!(c.default_provider.as_deref(), Some("openrouter"));
         assert!(c.default_model.as_deref().unwrap().contains("claude"));
@@ -10962,7 +10961,7 @@ mod tests {
     }
 
     #[test]
-    async fn config_dir_creation_error_mentions_openrc_and_path() {
+    fn config_dir_creation_error_mentions_openrc_and_path() {
         let msg = config_dir_creation_error(Path::new("/etc/zeroclaw"));
         assert!(msg.contains("/etc/zeroclaw"));
         assert!(msg.contains("OpenRC"));
@@ -10970,7 +10969,7 @@ mod tests {
     }
 
     #[test]
-    async fn config_schema_export_contains_expected_contract_shape() {
+    fn config_schema_export_contains_expected_contract_shape() {
         let schema = schemars::schema_for!(Config);
         let schema_json = serde_json::to_value(&schema).expect("schema should serialize to json");
 
@@ -11003,7 +11002,7 @@ mod tests {
     }
 
     #[cfg(unix)]
-    #[test]
+    #[tokio::test]
     async fn save_sets_config_permissions_on_new_file() {
         let temp = TempDir::new().expect("temp dir");
         let config_path = temp.path().join("config.toml");
@@ -11024,7 +11023,7 @@ mod tests {
     }
 
     #[test]
-    async fn observability_config_default() {
+    fn observability_config_default() {
         let o = ObservabilityConfig::default();
         assert_eq!(o.backend, "none");
         assert_eq!(o.runtime_trace_mode, "none");
@@ -11033,7 +11032,7 @@ mod tests {
     }
 
     #[test]
-    async fn autonomy_config_default() {
+    fn autonomy_config_default() {
         let a = AutonomyConfig::default();
         assert_eq!(a.level, AutonomyLevel::Supervised);
         assert!(a.workspace_only);
@@ -11048,7 +11047,7 @@ mod tests {
     }
 
     #[test]
-    async fn runtime_config_default() {
+    fn runtime_config_default() {
         let r = RuntimeConfig::default();
         assert_eq!(r.kind, "native");
         assert_eq!(r.docker.image, "alpine:3.20");
@@ -11060,7 +11059,7 @@ mod tests {
     }
 
     #[test]
-    async fn heartbeat_config_default() {
+    fn heartbeat_config_default() {
         let h = HeartbeatConfig::default();
         assert!(!h.enabled);
         assert_eq!(h.interval_minutes, 5);
@@ -11070,7 +11069,7 @@ mod tests {
     }
 
     #[test]
-    async fn heartbeat_config_parses_delivery_aliases() {
+    fn heartbeat_config_parses_delivery_aliases() {
         let raw = r#"
 enabled = true
 interval_minutes = 10
@@ -11087,14 +11086,14 @@ recipient = "42"
     }
 
     #[test]
-    async fn cron_config_default() {
+    fn cron_config_default() {
         let c = CronConfig::default();
         assert!(c.enabled);
         assert_eq!(c.max_run_history, 50);
     }
 
     #[test]
-    async fn cron_config_serde_roundtrip() {
+    fn cron_config_serde_roundtrip() {
         let c = CronConfig {
             enabled: false,
             catch_up_on_startup: false,
@@ -11109,7 +11108,7 @@ recipient = "42"
     }
 
     #[test]
-    async fn config_defaults_cron_when_section_missing() {
+    fn config_defaults_cron_when_section_missing() {
         let toml_str = r#"
 workspace_dir = "/tmp/workspace"
 config_path = "/tmp/config.toml"
@@ -11123,7 +11122,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn memory_config_default_hygiene_settings() {
+    fn memory_config_default_hygiene_settings() {
         let m = MemoryConfig::default();
         assert_eq!(m.backend, "sqlite");
         assert!(m.auto_save);
@@ -11211,7 +11210,7 @@ auto_save = true
     }
 
     #[test]
-    async fn storage_provider_config_defaults() {
+    fn storage_provider_config_defaults() {
         let storage = StorageConfig::default();
         assert!(storage.provider.config.provider.is_empty());
         assert!(storage.provider.config.db_url.is_none());
@@ -11221,7 +11220,7 @@ auto_save = true
     }
 
     #[test]
-    async fn channels_config_default() {
+    fn channels_config_default() {
         let c = ChannelsConfig::default();
         assert!(c.cli);
         assert!(c.telegram.is_none());
@@ -11232,7 +11231,7 @@ auto_save = true
     // ── Serde round-trip ─────────────────────────────────────
 
     #[test]
-    async fn config_toml_roundtrip() {
+    fn config_toml_roundtrip() {
         let config = Config {
             workspace_dir: PathBuf::from("/tmp/test/workspace"),
             config_path: PathBuf::from("/tmp/test/config.toml"),
@@ -11422,7 +11421,7 @@ auto_save = true
     }
 
     #[test]
-    async fn config_minimal_toml_uses_defaults() {
+    fn config_minimal_toml_uses_defaults() {
         let minimal = r#"
 workspace_dir = "/tmp/ws"
 config_path = "/tmp/config.toml"
@@ -11448,7 +11447,7 @@ default_temperature = 0.7
     /// Regression test for #4171: the `[autonomy]` section must not be
     /// silently dropped when parsing config TOML.
     #[test]
-    async fn autonomy_section_is_not_silently_ignored() {
+    fn autonomy_section_is_not_silently_ignored() {
         let raw = r#"
 default_temperature = 0.7
 
@@ -11479,7 +11478,7 @@ auto_approve = ["file_read", "memory_recall", "http_request"]
     /// Regression test for #4247: when a user provides a custom auto_approve
     /// list, the built-in defaults must still be present.
     #[test]
-    async fn auto_approve_merges_user_entries_with_defaults() {
+    fn auto_approve_merges_user_entries_with_defaults() {
         let raw = r#"
 default_temperature = 0.7
 
@@ -11519,7 +11518,7 @@ auto_approve = ["my_custom_tool", "another_tool"]
 
     /// Regression test: empty auto_approve still gets defaults merged.
     #[test]
-    async fn auto_approve_empty_list_gets_defaults() {
+    fn auto_approve_empty_list_gets_defaults() {
         let raw = r#"
 default_temperature = 0.7
 
@@ -11538,7 +11537,7 @@ auto_approve = []
 
     /// When no autonomy section is provided, defaults are applied normally.
     #[test]
-    async fn auto_approve_defaults_when_no_autonomy_section() {
+    fn auto_approve_defaults_when_no_autonomy_section() {
         let raw = r#"
 default_temperature = 0.7
 "#;
@@ -11555,7 +11554,7 @@ default_temperature = 0.7
     /// Duplicates are not introduced when ensure_default_auto_approve runs
     /// on a list that already contains the defaults.
     #[test]
-    async fn auto_approve_no_duplicates() {
+    fn auto_approve_no_duplicates() {
         let raw = r#"
 default_temperature = 0.7
 
@@ -11580,7 +11579,7 @@ auto_approve = ["weather", "file_read"]
     }
 
     #[test]
-    async fn provider_timeout_secs_parses_from_toml() {
+    fn provider_timeout_secs_parses_from_toml() {
         let raw = r#"
 default_temperature = 0.7
 provider_timeout_secs = 300
@@ -11590,7 +11589,7 @@ provider_timeout_secs = 300
     }
 
     #[test]
-    async fn parse_extra_headers_env_basic() {
+    fn parse_extra_headers_env_basic() {
         let headers = parse_extra_headers_env("User-Agent:MyApp/1.0,X-Title:zeroclaw");
         assert_eq!(headers.len(), 2);
         assert_eq!(
@@ -11601,7 +11600,7 @@ provider_timeout_secs = 300
     }
 
     #[test]
-    async fn parse_extra_headers_env_with_url_value() {
+    fn parse_extra_headers_env_with_url_value() {
         let headers =
             parse_extra_headers_env("HTTP-Referer:https://github.com/zeroclaw-labs/zeroclaw");
         assert_eq!(headers.len(), 1);
@@ -11611,13 +11610,13 @@ provider_timeout_secs = 300
     }
 
     #[test]
-    async fn parse_extra_headers_env_empty_string() {
+    fn parse_extra_headers_env_empty_string() {
         let headers = parse_extra_headers_env("");
         assert!(headers.is_empty());
     }
 
     #[test]
-    async fn parse_extra_headers_env_whitespace_trimming() {
+    fn parse_extra_headers_env_whitespace_trimming() {
         let headers = parse_extra_headers_env("  X-Title : zeroclaw , User-Agent : cli/1.0 ");
         assert_eq!(headers.len(), 2);
         assert_eq!(headers[0], ("X-Title".to_string(), "zeroclaw".to_string()));
@@ -11628,7 +11627,7 @@ provider_timeout_secs = 300
     }
 
     #[test]
-    async fn parse_extra_headers_env_skips_malformed() {
+    fn parse_extra_headers_env_skips_malformed() {
         let headers = parse_extra_headers_env("X-Valid:value,no-colon-here,Another:ok");
         assert_eq!(headers.len(), 2);
         assert_eq!(headers[0], ("X-Valid".to_string(), "value".to_string()));
@@ -11636,28 +11635,28 @@ provider_timeout_secs = 300
     }
 
     #[test]
-    async fn parse_extra_headers_env_skips_empty_key() {
+    fn parse_extra_headers_env_skips_empty_key() {
         let headers = parse_extra_headers_env(":value,X-Valid:ok");
         assert_eq!(headers.len(), 1);
         assert_eq!(headers[0], ("X-Valid".to_string(), "ok".to_string()));
     }
 
     #[test]
-    async fn parse_extra_headers_env_allows_empty_value() {
+    fn parse_extra_headers_env_allows_empty_value() {
         let headers = parse_extra_headers_env("X-Empty:");
         assert_eq!(headers.len(), 1);
         assert_eq!(headers[0], ("X-Empty".to_string(), String::new()));
     }
 
     #[test]
-    async fn parse_extra_headers_env_trailing_comma() {
+    fn parse_extra_headers_env_trailing_comma() {
         let headers = parse_extra_headers_env("X-Title:zeroclaw,");
         assert_eq!(headers.len(), 1);
         assert_eq!(headers[0], ("X-Title".to_string(), "zeroclaw".to_string()));
     }
 
     #[test]
-    async fn extra_headers_parses_from_toml() {
+    fn extra_headers_parses_from_toml() {
         let raw = r#"
 default_temperature = 0.7
 
@@ -11672,7 +11671,7 @@ X-Title = "zeroclaw"
     }
 
     #[test]
-    async fn extra_headers_defaults_to_empty() {
+    fn extra_headers_defaults_to_empty() {
         let raw = r#"
 default_temperature = 0.7
 "#;
@@ -11681,7 +11680,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn storage_provider_dburl_alias_deserializes() {
+    fn storage_provider_dburl_alias_deserializes() {
         let raw = r#"
 default_temperature = 0.7
 
@@ -11708,7 +11707,7 @@ connect_timeout_secs = 12
     }
 
     #[test]
-    async fn runtime_reasoning_enabled_deserializes() {
+    fn runtime_reasoning_enabled_deserializes() {
         let raw = r#"
 default_temperature = 0.7
 
@@ -11721,7 +11720,7 @@ reasoning_enabled = false
     }
 
     #[test]
-    async fn runtime_reasoning_effort_deserializes() {
+    fn runtime_reasoning_effort_deserializes() {
         let raw = r#"
 default_temperature = 0.7
 
@@ -11734,7 +11733,7 @@ reasoning_effort = "HIGH"
     }
 
     #[test]
-    async fn runtime_reasoning_effort_rejects_invalid_values() {
+    fn runtime_reasoning_effort_rejects_invalid_values() {
         let raw = r#"
 default_temperature = 0.7
 
@@ -11747,7 +11746,7 @@ reasoning_effort = "turbo"
     }
 
     #[test]
-    async fn agent_config_defaults() {
+    fn agent_config_defaults() {
         let cfg = AgentConfig::default();
         assert!(cfg.compact_context);
         assert_eq!(cfg.max_tool_iterations, 10);
@@ -11757,7 +11756,7 @@ reasoning_effort = "turbo"
     }
 
     #[test]
-    async fn agent_config_deserializes() {
+    fn agent_config_deserializes() {
         let raw = r#"
 default_temperature = 0.7
 [agent]
@@ -11776,7 +11775,7 @@ tool_dispatcher = "xml"
     }
 
     #[test]
-    async fn pacing_config_defaults_are_all_none_or_empty() {
+    fn pacing_config_defaults_are_all_none_or_empty() {
         let cfg = PacingConfig::default();
         assert!(cfg.step_timeout_secs.is_none());
         assert!(cfg.loop_detection_min_elapsed_secs.is_none());
@@ -11785,7 +11784,7 @@ tool_dispatcher = "xml"
     }
 
     #[test]
-    async fn pacing_config_deserializes_from_toml() {
+    fn pacing_config_deserializes_from_toml() {
         let raw = r#"
 default_temperature = 0.7
 [pacing]
@@ -11805,7 +11804,7 @@ message_timeout_scale_max = 8
     }
 
     #[test]
-    async fn pacing_config_absent_preserves_defaults() {
+    fn pacing_config_absent_preserves_defaults() {
         let raw = r#"
 default_temperature = 0.7
 "#;
@@ -12097,7 +12096,7 @@ default_temperature = 0.7
     // ── Telegram / Discord config ────────────────────────────
 
     #[test]
-    async fn telegram_config_serde() {
+    fn telegram_config_serde() {
         let tc = TelegramConfig {
             bot_token: "123:XYZ".into(),
             allowed_users: vec!["alice".into(), "bob".into()],
@@ -12118,7 +12117,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn telegram_config_defaults_stream_off() {
+    fn telegram_config_defaults_stream_off() {
         let json = r#"{"bot_token":"tok","allowed_users":[]}"#;
         let parsed: TelegramConfig = serde_json::from_str(json).unwrap();
         assert_eq!(parsed.stream_mode, StreamMode::Off);
@@ -12127,7 +12126,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn discord_config_serde() {
+    fn discord_config_serde() {
         let dc = DiscordConfig {
             bot_token: "discord-token".into(),
             guild_id: Some("12345".into()),
@@ -12147,7 +12146,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn discord_config_optional_guild() {
+    fn discord_config_optional_guild() {
         let dc = DiscordConfig {
             bot_token: "tok".into(),
             guild_id: None,
@@ -12168,7 +12167,7 @@ default_temperature = 0.7
     // ── iMessage / Matrix config ────────────────────────────
 
     #[test]
-    async fn imessage_config_serde() {
+    fn imessage_config_serde() {
         let ic = IMessageConfig {
             allowed_contacts: vec!["+1234567890".into(), "user@icloud.com".into()],
         };
@@ -12179,7 +12178,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn imessage_config_empty_contacts() {
+    fn imessage_config_empty_contacts() {
         let ic = IMessageConfig {
             allowed_contacts: vec![],
         };
@@ -12189,7 +12188,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn imessage_config_wildcard() {
+    fn imessage_config_wildcard() {
         let ic = IMessageConfig {
             allowed_contacts: vec!["*".into()],
         };
@@ -12199,7 +12198,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn matrix_config_serde() {
+    fn matrix_config_serde() {
         let mc = MatrixConfig {
             homeserver: "https://matrix.org".into(),
             access_token: "syt_token_abc".into(),
@@ -12224,7 +12223,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn matrix_config_toml_roundtrip() {
+    fn matrix_config_toml_roundtrip() {
         let mc = MatrixConfig {
             homeserver: "https://synapse.local:8448".into(),
             access_token: "tok".into(),
@@ -12245,7 +12244,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn matrix_config_backward_compatible_without_session_hints() {
+    fn matrix_config_backward_compatible_without_session_hints() {
         let toml = r#"
 homeserver = "https://matrix.org"
 access_token = "tok"
@@ -12260,7 +12259,7 @@ allowed_users = ["@ops:matrix.org"]
     }
 
     #[test]
-    async fn signal_config_serde() {
+    fn signal_config_serde() {
         let sc = SignalConfig {
             http_url: "http://127.0.0.1:8686".into(),
             account: "+1234567890".into(),
@@ -12281,7 +12280,7 @@ allowed_users = ["@ops:matrix.org"]
     }
 
     #[test]
-    async fn signal_config_toml_roundtrip() {
+    fn signal_config_toml_roundtrip() {
         let sc = SignalConfig {
             http_url: "http://localhost:8080".into(),
             account: "+9876543210".into(),
@@ -12300,7 +12299,7 @@ allowed_users = ["@ops:matrix.org"]
     }
 
     #[test]
-    async fn signal_config_defaults() {
+    fn signal_config_defaults() {
         let json = r#"{"http_url":"http://127.0.0.1:8686","account":"+1234567890"}"#;
         let parsed: SignalConfig = serde_json::from_str(json).unwrap();
         assert!(parsed.group_id.is_none());
@@ -12310,7 +12309,7 @@ allowed_users = ["@ops:matrix.org"]
     }
 
     #[test]
-    async fn channels_config_with_imessage_and_matrix() {
+    fn channels_config_with_imessage_and_matrix() {
         let c = ChannelsConfig {
             cli: true,
             telegram: None,
@@ -12374,7 +12373,7 @@ allowed_users = ["@ops:matrix.org"]
     }
 
     #[test]
-    async fn channels_config_default_has_no_imessage_matrix() {
+    fn channels_config_default_has_no_imessage_matrix() {
         let c = ChannelsConfig::default();
         assert!(c.imessage.is_none());
         assert!(c.matrix.is_none());
@@ -12383,7 +12382,7 @@ allowed_users = ["@ops:matrix.org"]
     // ── Edge cases: serde(default) for allowed_users ─────────
 
     #[test]
-    async fn discord_config_deserializes_without_allowed_users() {
+    fn discord_config_deserializes_without_allowed_users() {
         // Old configs won't have allowed_users — serde(default) should fill vec![]
         let json = r#"{"bot_token":"tok","guild_id":"123"}"#;
         let parsed: DiscordConfig = serde_json::from_str(json).unwrap();
@@ -12391,14 +12390,14 @@ allowed_users = ["@ops:matrix.org"]
     }
 
     #[test]
-    async fn discord_config_deserializes_with_allowed_users() {
+    fn discord_config_deserializes_with_allowed_users() {
         let json = r#"{"bot_token":"tok","guild_id":"123","allowed_users":["111","222"]}"#;
         let parsed: DiscordConfig = serde_json::from_str(json).unwrap();
         assert_eq!(parsed.allowed_users, vec!["111", "222"]);
     }
 
     #[test]
-    async fn slack_config_deserializes_without_allowed_users() {
+    fn slack_config_deserializes_without_allowed_users() {
         let json = r#"{"bot_token":"xoxb-tok"}"#;
         let parsed: SlackConfig = serde_json::from_str(json).unwrap();
         assert!(parsed.channel_ids.is_empty());
@@ -12409,7 +12408,7 @@ allowed_users = ["@ops:matrix.org"]
     }
 
     #[test]
-    async fn slack_config_deserializes_with_allowed_users() {
+    fn slack_config_deserializes_with_allowed_users() {
         let json = r#"{"bot_token":"xoxb-tok","allowed_users":["U111"]}"#;
         let parsed: SlackConfig = serde_json::from_str(json).unwrap();
         assert!(parsed.channel_ids.is_empty());
@@ -12420,7 +12419,7 @@ allowed_users = ["@ops:matrix.org"]
     }
 
     #[test]
-    async fn slack_config_deserializes_with_channel_ids() {
+    fn slack_config_deserializes_with_channel_ids() {
         let json = r#"{"bot_token":"xoxb-tok","channel_ids":["C111","D222"]}"#;
         let parsed: SlackConfig = serde_json::from_str(json).unwrap();
         assert_eq!(parsed.channel_ids, vec!["C111", "D222"]);
@@ -12431,7 +12430,7 @@ allowed_users = ["@ops:matrix.org"]
     }
 
     #[test]
-    async fn slack_config_deserializes_with_mention_only() {
+    fn slack_config_deserializes_with_mention_only() {
         let json = r#"{"bot_token":"xoxb-tok","mention_only":true}"#;
         let parsed: SlackConfig = serde_json::from_str(json).unwrap();
         assert!(parsed.mention_only);
@@ -12440,7 +12439,7 @@ allowed_users = ["@ops:matrix.org"]
     }
 
     #[test]
-    async fn slack_config_deserializes_interrupt_on_new_message() {
+    fn slack_config_deserializes_interrupt_on_new_message() {
         let json = r#"{"bot_token":"xoxb-tok","interrupt_on_new_message":true}"#;
         let parsed: SlackConfig = serde_json::from_str(json).unwrap();
         assert!(parsed.interrupt_on_new_message);
@@ -12449,7 +12448,7 @@ allowed_users = ["@ops:matrix.org"]
     }
 
     #[test]
-    async fn slack_config_deserializes_thread_replies() {
+    fn slack_config_deserializes_thread_replies() {
         let json = r#"{"bot_token":"xoxb-tok","thread_replies":false}"#;
         let parsed: SlackConfig = serde_json::from_str(json).unwrap();
         assert_eq!(parsed.thread_replies, Some(false));
@@ -12458,21 +12457,21 @@ allowed_users = ["@ops:matrix.org"]
     }
 
     #[test]
-    async fn discord_config_default_interrupt_on_new_message_is_false() {
+    fn discord_config_default_interrupt_on_new_message_is_false() {
         let json = r#"{"bot_token":"tok"}"#;
         let parsed: DiscordConfig = serde_json::from_str(json).unwrap();
         assert!(!parsed.interrupt_on_new_message);
     }
 
     #[test]
-    async fn discord_config_deserializes_interrupt_on_new_message_true() {
+    fn discord_config_deserializes_interrupt_on_new_message_true() {
         let json = r#"{"bot_token":"tok","interrupt_on_new_message":true}"#;
         let parsed: DiscordConfig = serde_json::from_str(json).unwrap();
         assert!(parsed.interrupt_on_new_message);
     }
 
     #[test]
-    async fn discord_config_toml_backward_compat() {
+    fn discord_config_toml_backward_compat() {
         let toml_str = r#"
 bot_token = "tok"
 guild_id = "123"
@@ -12483,7 +12482,7 @@ guild_id = "123"
     }
 
     #[test]
-    async fn slack_config_toml_backward_compat() {
+    fn slack_config_toml_backward_compat() {
         let toml_str = r#"
 bot_token = "xoxb-tok"
 channel_id = "C123"
@@ -12498,7 +12497,7 @@ channel_id = "C123"
     }
 
     #[test]
-    async fn slack_config_toml_accepts_channel_ids() {
+    fn slack_config_toml_accepts_channel_ids() {
         let toml_str = r#"
 bot_token = "xoxb-tok"
 channel_ids = ["C123", "D456"]
@@ -12513,14 +12512,14 @@ channel_ids = ["C123", "D456"]
     }
 
     #[test]
-    async fn mattermost_config_default_interrupt_on_new_message_is_false() {
+    fn mattermost_config_default_interrupt_on_new_message_is_false() {
         let json = r#"{"url":"https://mm.example.com","bot_token":"tok"}"#;
         let parsed: MattermostConfig = serde_json::from_str(json).unwrap();
         assert!(!parsed.interrupt_on_new_message);
     }
 
     #[test]
-    async fn mattermost_config_deserializes_interrupt_on_new_message_true() {
+    fn mattermost_config_deserializes_interrupt_on_new_message_true() {
         let json =
             r#"{"url":"https://mm.example.com","bot_token":"tok","interrupt_on_new_message":true}"#;
         let parsed: MattermostConfig = serde_json::from_str(json).unwrap();
@@ -12528,14 +12527,14 @@ channel_ids = ["C123", "D456"]
     }
 
     #[test]
-    async fn webhook_config_with_secret() {
+    fn webhook_config_with_secret() {
         let json = r#"{"port":8080,"secret":"my-secret-key"}"#;
         let parsed: WebhookConfig = serde_json::from_str(json).unwrap();
         assert_eq!(parsed.secret.as_deref(), Some("my-secret-key"));
     }
 
     #[test]
-    async fn webhook_config_without_secret() {
+    fn webhook_config_without_secret() {
         let json = r#"{"port":8080}"#;
         let parsed: WebhookConfig = serde_json::from_str(json).unwrap();
         assert!(parsed.secret.is_none());
@@ -12545,7 +12544,7 @@ channel_ids = ["C123", "D456"]
     // ── WhatsApp config ──────────────────────────────────────
 
     #[test]
-    async fn whatsapp_config_serde() {
+    fn whatsapp_config_serde() {
         let wc = WhatsAppConfig {
             access_token: Some("EAABx...".into()),
             phone_number_id: Some("123456789".into()),
@@ -12572,7 +12571,7 @@ channel_ids = ["C123", "D456"]
     }
 
     #[test]
-    async fn whatsapp_config_toml_roundtrip() {
+    fn whatsapp_config_toml_roundtrip() {
         let wc = WhatsAppConfig {
             access_token: Some("tok".into()),
             phone_number_id: Some("12345".into()),
@@ -12597,14 +12596,14 @@ channel_ids = ["C123", "D456"]
     }
 
     #[test]
-    async fn whatsapp_config_deserializes_without_allowed_numbers() {
+    fn whatsapp_config_deserializes_without_allowed_numbers() {
         let json = r#"{"access_token":"tok","phone_number_id":"123","verify_token":"ver"}"#;
         let parsed: WhatsAppConfig = serde_json::from_str(json).unwrap();
         assert!(parsed.allowed_numbers.is_empty());
     }
 
     #[test]
-    async fn whatsapp_config_wildcard_allowed() {
+    fn whatsapp_config_wildcard_allowed() {
         let wc = WhatsAppConfig {
             access_token: Some("tok".into()),
             phone_number_id: Some("123".into()),
@@ -12628,7 +12627,7 @@ channel_ids = ["C123", "D456"]
     }
 
     #[test]
-    async fn whatsapp_config_backend_type_cloud_precedence_when_ambiguous() {
+    fn whatsapp_config_backend_type_cloud_precedence_when_ambiguous() {
         let wc = WhatsAppConfig {
             access_token: Some("tok".into()),
             phone_number_id: Some("123".into()),
@@ -12651,7 +12650,7 @@ channel_ids = ["C123", "D456"]
     }
 
     #[test]
-    async fn whatsapp_config_backend_type_web() {
+    fn whatsapp_config_backend_type_web() {
         let wc = WhatsAppConfig {
             access_token: None,
             phone_number_id: None,
@@ -12674,7 +12673,7 @@ channel_ids = ["C123", "D456"]
     }
 
     #[test]
-    async fn channels_config_with_whatsapp() {
+    fn channels_config_with_whatsapp() {
         let c = ChannelsConfig {
             cli: true,
             telegram: None,
@@ -12740,13 +12739,13 @@ channel_ids = ["C123", "D456"]
     }
 
     #[test]
-    async fn channels_config_default_has_no_whatsapp() {
+    fn channels_config_default_has_no_whatsapp() {
         let c = ChannelsConfig::default();
         assert!(c.whatsapp.is_none());
     }
 
     #[test]
-    async fn channels_config_default_has_no_nextcloud_talk() {
+    fn channels_config_default_has_no_nextcloud_talk() {
         let c = ChannelsConfig::default();
         assert!(c.nextcloud_talk.is_none());
     }
@@ -12756,13 +12755,13 @@ channel_ids = ["C123", "D456"]
     // ══════════════════════════════════════════════════════════
 
     #[test]
-    async fn checklist_gateway_default_requires_pairing() {
+    fn checklist_gateway_default_requires_pairing() {
         let g = GatewayConfig::default();
         assert!(g.require_pairing, "Pairing must be required by default");
     }
 
     #[test]
-    async fn checklist_gateway_default_blocks_public_bind() {
+    fn checklist_gateway_default_blocks_public_bind() {
         let g = GatewayConfig::default();
         assert!(
             !g.allow_public_bind,
@@ -12771,7 +12770,7 @@ channel_ids = ["C123", "D456"]
     }
 
     #[test]
-    async fn checklist_gateway_default_no_tokens() {
+    fn checklist_gateway_default_no_tokens() {
         let g = GatewayConfig::default();
         assert!(
             g.paired_tokens.is_empty(),
@@ -12786,7 +12785,7 @@ channel_ids = ["C123", "D456"]
     }
 
     #[test]
-    async fn checklist_gateway_cli_default_host_is_localhost() {
+    fn checklist_gateway_cli_default_host_is_localhost() {
         // The CLI default for --host is 127.0.0.1 (checked in main.rs)
         // Here we verify the config default matches
         let c = Config::default();
@@ -12801,7 +12800,7 @@ channel_ids = ["C123", "D456"]
     }
 
     #[test]
-    async fn checklist_gateway_serde_roundtrip() {
+    fn checklist_gateway_serde_roundtrip() {
         let g = GatewayConfig {
             port: 42617,
             host: "127.0.0.1".into(),
@@ -12837,7 +12836,7 @@ channel_ids = ["C123", "D456"]
     }
 
     #[test]
-    async fn checklist_gateway_backward_compat_no_gateway_section() {
+    fn checklist_gateway_backward_compat_no_gateway_section() {
         // Old configs without [gateway] should get secure defaults
         let minimal = r#"
 workspace_dir = "/tmp/ws"
@@ -12856,7 +12855,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn checklist_autonomy_default_is_workspace_scoped() {
+    fn checklist_autonomy_default_is_workspace_scoped() {
         let a = AutonomyConfig::default();
         assert!(a.workspace_only, "Default autonomy must be workspace_only");
         assert!(
@@ -12878,7 +12877,7 @@ default_temperature = 0.7
     // ══════════════════════════════════════════════════════════
 
     #[test]
-    async fn composio_config_default_disabled() {
+    fn composio_config_default_disabled() {
         let c = ComposioConfig::default();
         assert!(!c.enabled, "Composio must be disabled by default");
         assert!(c.api_key.is_none(), "No API key by default");
@@ -12886,7 +12885,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn composio_config_serde_roundtrip() {
+    fn composio_config_serde_roundtrip() {
         let c = ComposioConfig {
             enabled: true,
             api_key: Some("comp-key-123".into()),
@@ -12900,7 +12899,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn composio_config_backward_compat_missing_section() {
+    fn composio_config_backward_compat_missing_section() {
         let minimal = r#"
 workspace_dir = "/tmp/ws"
 config_path = "/tmp/config.toml"
@@ -12915,7 +12914,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn composio_config_partial_toml() {
+    fn composio_config_partial_toml() {
         let toml_str = r"
 enabled = true
 ";
@@ -12926,7 +12925,7 @@ enabled = true
     }
 
     #[test]
-    async fn composio_config_enable_alias_supported() {
+    fn composio_config_enable_alias_supported() {
         let toml_str = r"
 enable = true
 ";
@@ -12941,13 +12940,13 @@ enable = true
     // ══════════════════════════════════════════════════════════
 
     #[test]
-    async fn secrets_config_default_encrypts() {
+    fn secrets_config_default_encrypts() {
         let s = SecretsConfig::default();
         assert!(s.encrypt, "Encryption must be enabled by default");
     }
 
     #[test]
-    async fn secrets_config_serde_roundtrip() {
+    fn secrets_config_serde_roundtrip() {
         let s = SecretsConfig { encrypt: false };
         let toml_str = toml::to_string(&s).unwrap();
         let parsed: SecretsConfig = toml::from_str(&toml_str).unwrap();
@@ -12955,7 +12954,7 @@ enable = true
     }
 
     #[test]
-    async fn secrets_config_backward_compat_missing_section() {
+    fn secrets_config_backward_compat_missing_section() {
         let minimal = r#"
 workspace_dir = "/tmp/ws"
 config_path = "/tmp/config.toml"
@@ -12969,7 +12968,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn config_default_has_composio_and_secrets() {
+    fn config_default_has_composio_and_secrets() {
         let c = Config::default();
         assert!(!c.composio.enabled);
         assert!(c.composio.api_key.is_none());
@@ -12979,7 +12978,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn browser_config_default_enabled() {
+    fn browser_config_default_enabled() {
         let b = BrowserConfig::default();
         assert!(b.enabled);
         assert_eq!(b.allowed_domains, vec!["*".to_string()]);
@@ -12996,7 +12995,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn browser_config_serde_roundtrip() {
+    fn browser_config_serde_roundtrip() {
         let b = BrowserConfig {
             enabled: true,
             allowed_domains: vec!["example.com".into(), "docs.example.com".into()],
@@ -13040,7 +13039,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn browser_config_backward_compat_missing_section() {
+    fn browser_config_backward_compat_missing_section() {
         let minimal = r#"
 workspace_dir = "/tmp/ws"
 config_path = "/tmp/config.toml"
@@ -13080,7 +13079,7 @@ default_temperature = 0.7
         }
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_api_key() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13093,7 +13092,7 @@ default_temperature = 0.7
         std::env::remove_var("ZEROCLAW_API_KEY");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_api_key_fallback() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13106,7 +13105,7 @@ default_temperature = 0.7
         std::env::remove_var("API_KEY");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_provider() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13118,7 +13117,7 @@ default_temperature = 0.7
         std::env::remove_var("ZEROCLAW_PROVIDER");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_model_provider_alias() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13132,7 +13131,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn toml_supports_model_provider_and_model_alias_fields() {
+    fn toml_supports_model_provider_and_model_alias_fields() {
         let raw = r#"
 default_temperature = 0.7
 model_provider = "sub2api"
@@ -13156,7 +13155,7 @@ requires_openai_auth = true
         assert!(profile.requires_openai_auth);
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_open_skills_enabled_and_dir() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13190,7 +13189,7 @@ requires_openai_auth = true
         std::env::remove_var("ZEROCLAW_SKILLS_PROMPT_MODE");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_open_skills_enabled_invalid_value_keeps_existing_value() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13214,7 +13213,7 @@ requires_openai_auth = true
         std::env::remove_var("ZEROCLAW_SKILLS_PROMPT_MODE");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_provider_fallback() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13227,7 +13226,7 @@ requires_openai_auth = true
         std::env::remove_var("PROVIDER");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_provider_fallback_does_not_replace_non_default_provider() {
         let _env_guard = env_override_lock().await;
         let mut config = Config {
@@ -13246,7 +13245,7 @@ requires_openai_auth = true
         std::env::remove_var("PROVIDER");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_zero_claw_provider_overrides_non_default_provider() {
         let _env_guard = env_override_lock().await;
         let mut config = Config {
@@ -13263,7 +13262,7 @@ requires_openai_auth = true
         std::env::remove_var("PROVIDER");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_glm_api_key_for_regional_aliases() {
         let _env_guard = env_override_lock().await;
         let mut config = Config {
@@ -13278,7 +13277,7 @@ requires_openai_auth = true
         std::env::remove_var("GLM_API_KEY");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_zai_api_key_for_regional_aliases() {
         let _env_guard = env_override_lock().await;
         let mut config = Config {
@@ -13293,7 +13292,7 @@ requires_openai_auth = true
         std::env::remove_var("ZAI_API_KEY");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_model() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13305,7 +13304,7 @@ requires_openai_auth = true
         std::env::remove_var("ZEROCLAW_MODEL");
     }
 
-    #[test]
+    #[tokio::test]
     async fn model_provider_profile_maps_to_custom_endpoint() {
         let _env_guard = env_override_lock().await;
         let mut config = Config {
@@ -13338,7 +13337,7 @@ requires_openai_auth = true
         );
     }
 
-    #[test]
+    #[tokio::test]
     async fn model_provider_profile_responses_uses_openai_codex_and_openai_key() {
         let _env_guard = env_override_lock().await;
         let mut config = Config {
@@ -13370,7 +13369,7 @@ requires_openai_auth = true
         assert_eq!(config.api_key.as_deref(), Some("sk-test-codex-key"));
     }
 
-    #[test]
+    #[tokio::test]
     async fn save_repairs_bare_config_filename_using_runtime_resolution() {
         let _env_guard = env_override_lock().await;
         let temp_home =
@@ -13404,7 +13403,7 @@ requires_openai_auth = true
         let _ = tokio::fs::remove_dir_all(temp_home).await;
     }
 
-    #[test]
+    #[tokio::test]
     async fn validate_ollama_cloud_model_requires_remote_api_url() {
         let _env_guard = env_override_lock().await;
         let config = Config {
@@ -13421,7 +13420,7 @@ requires_openai_auth = true
         ));
     }
 
-    #[test]
+    #[tokio::test]
     async fn validate_ollama_cloud_model_accepts_remote_endpoint_and_env_key() {
         let _env_guard = env_override_lock().await;
         let config = Config {
@@ -13439,7 +13438,7 @@ requires_openai_auth = true
         assert!(result.is_ok(), "expected validation to pass: {result:?}");
     }
 
-    #[test]
+    #[tokio::test]
     async fn validate_rejects_unknown_model_provider_wire_api() {
         let _env_guard = env_override_lock().await;
         let config = Config {
@@ -13467,7 +13466,7 @@ requires_openai_auth = true
             .contains("wire_api must be one of: responses, chat_completions"));
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_model_fallback() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13483,7 +13482,7 @@ requires_openai_auth = true
         std::env::remove_var("MODEL");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_workspace() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13495,7 +13494,7 @@ requires_openai_auth = true
         std::env::remove_var("ZEROCLAW_WORKSPACE");
     }
 
-    #[test]
+    #[tokio::test]
     async fn resolve_runtime_config_dirs_uses_env_workspace_first() {
         let _env_guard = env_override_lock().await;
         let default_config_dir = std::env::temp_dir().join(uuid::Uuid::new_v4().to_string());
@@ -13516,7 +13515,7 @@ requires_openai_auth = true
         let _ = fs::remove_dir_all(default_config_dir).await;
     }
 
-    #[test]
+    #[tokio::test]
     async fn resolve_runtime_config_dirs_uses_env_config_dir_first() {
         let _env_guard = env_override_lock().await;
         let default_config_dir = std::env::temp_dir().join(uuid::Uuid::new_v4().to_string());
@@ -13552,7 +13551,7 @@ requires_openai_auth = true
         let _ = fs::remove_dir_all(default_config_dir).await;
     }
 
-    #[test]
+    #[tokio::test]
     async fn resolve_runtime_config_dirs_uses_active_workspace_marker() {
         let _env_guard = env_override_lock().await;
         let default_config_dir = std::env::temp_dir().join(uuid::Uuid::new_v4().to_string());
@@ -13581,7 +13580,7 @@ requires_openai_auth = true
         let _ = fs::remove_dir_all(default_config_dir).await;
     }
 
-    #[test]
+    #[tokio::test]
     async fn resolve_runtime_config_dirs_falls_back_to_default_layout() {
         let _env_guard = env_override_lock().await;
         let default_config_dir = std::env::temp_dir().join(uuid::Uuid::new_v4().to_string());
@@ -13600,7 +13599,7 @@ requires_openai_auth = true
         let _ = fs::remove_dir_all(default_config_dir).await;
     }
 
-    #[test]
+    #[tokio::test]
     async fn load_or_init_workspace_override_uses_workspace_root_for_config() {
         let _env_guard = env_override_lock().await;
         let temp_home =
@@ -13626,7 +13625,7 @@ requires_openai_auth = true
         let _ = fs::remove_dir_all(temp_home).await;
     }
 
-    #[test]
+    #[tokio::test]
     async fn load_or_init_workspace_suffix_uses_legacy_config_layout() {
         let _env_guard = env_override_lock().await;
         let temp_home =
@@ -13653,7 +13652,7 @@ requires_openai_auth = true
         let _ = fs::remove_dir_all(temp_home).await;
     }
 
-    #[test]
+    #[tokio::test]
     async fn load_or_init_workspace_override_keeps_existing_legacy_config() {
         let _env_guard = env_override_lock().await;
         let temp_home =
@@ -13691,7 +13690,7 @@ default_model = "legacy-model"
         let _ = fs::remove_dir_all(temp_home).await;
     }
 
-    #[test]
+    #[tokio::test]
     async fn load_or_init_decrypts_feishu_channel_secrets() {
         let _env_guard = env_override_lock().await;
         let temp_home =
@@ -13735,7 +13734,7 @@ default_model = "legacy-model"
         let _ = fs::remove_dir_all(temp_home).await;
     }
 
-    #[test]
+    #[tokio::test]
     async fn load_or_init_uses_persisted_active_workspace_marker() {
         let _env_guard = env_override_lock().await;
         let temp_home =
@@ -13782,7 +13781,7 @@ default_model = "legacy-model"
         let _ = fs::remove_dir_all(temp_home).await;
     }
 
-    #[test]
+    #[tokio::test]
     async fn load_or_init_env_workspace_override_takes_priority_over_marker() {
         let _env_guard = env_override_lock().await;
         let temp_home =
@@ -13822,7 +13821,7 @@ default_model = "legacy-model"
         let _ = fs::remove_dir_all(temp_home).await;
     }
 
-    #[test]
+    #[tokio::test]
     async fn persist_active_workspace_marker_is_cleared_for_default_config_dir() {
         let temp_home =
             std::env::temp_dir().join(format!("zeroclaw_test_home_{}", uuid::Uuid::new_v4()));
@@ -13845,7 +13844,7 @@ default_model = "legacy-model"
         let _ = fs::remove_dir_all(temp_home).await;
     }
 
-    #[test]
+    #[tokio::test]
     #[allow(clippy::large_futures)]
     async fn load_or_init_logs_existing_config_as_initialized() {
         let _env_guard = env_override_lock().await;
@@ -13899,7 +13898,7 @@ default_model = "persisted-profile"
         let _ = fs::remove_dir_all(temp_home).await;
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_empty_values_ignored() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13912,7 +13911,7 @@ default_model = "persisted-profile"
         std::env::remove_var("ZEROCLAW_PROVIDER");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_gateway_port() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13925,7 +13924,7 @@ default_model = "persisted-profile"
         std::env::remove_var("ZEROCLAW_GATEWAY_PORT");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_port_fallback() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13938,7 +13937,7 @@ default_model = "persisted-profile"
         std::env::remove_var("PORT");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_gateway_host() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13951,7 +13950,7 @@ default_model = "persisted-profile"
         std::env::remove_var("ZEROCLAW_GATEWAY_HOST");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_host_fallback() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13964,7 +13963,7 @@ default_model = "persisted-profile"
         std::env::remove_var("HOST");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_require_pairing() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13981,7 +13980,7 @@ default_model = "persisted-profile"
         std::env::remove_var("ZEROCLAW_REQUIRE_PAIRING");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_temperature() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -13993,7 +13992,7 @@ default_model = "persisted-profile"
         std::env::remove_var("ZEROCLAW_TEMPERATURE");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_temperature_out_of_range_ignored() {
         let _env_guard = env_override_lock().await;
         // Clean up any leftover env vars from other tests
@@ -14013,7 +14012,7 @@ default_model = "persisted-profile"
         std::env::remove_var("ZEROCLAW_TEMPERATURE");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_reasoning_enabled() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -14030,7 +14029,7 @@ default_model = "persisted-profile"
         std::env::remove_var("ZEROCLAW_REASONING_ENABLED");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_reasoning_invalid_value_ignored() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -14043,7 +14042,7 @@ default_model = "persisted-profile"
         std::env::remove_var("ZEROCLAW_REASONING_ENABLED");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_reasoning_effort() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -14056,7 +14055,7 @@ default_model = "persisted-profile"
         std::env::remove_var("ZEROCLAW_REASONING_EFFORT");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_reasoning_effort_legacy_codex_env() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -14068,7 +14067,7 @@ default_model = "persisted-profile"
         std::env::remove_var("ZEROCLAW_CODEX_REASONING_EFFORT");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_invalid_port_ignored() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -14081,7 +14080,7 @@ default_model = "persisted-profile"
         std::env::remove_var("PORT");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_web_search_config() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -14110,7 +14109,7 @@ default_model = "persisted-profile"
         std::env::remove_var("BRAVE_API_KEY");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_web_search_invalid_values_ignored() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -14129,7 +14128,7 @@ default_model = "persisted-profile"
         std::env::remove_var("WEB_SEARCH_TIMEOUT_SECS");
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_storage_provider_config() {
         let _env_guard = env_override_lock().await;
         let mut config = Config::default();
@@ -14156,7 +14155,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn proxy_config_scope_services_requires_entries_when_enabled() {
+    fn proxy_config_scope_services_requires_entries_when_enabled() {
         let proxy = ProxyConfig {
             enabled: true,
             http_proxy: Some("http://127.0.0.1:7890".into()),
@@ -14171,7 +14170,7 @@ default_model = "persisted-profile"
         assert!(error.contains("proxy.scope='services'"));
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_proxy_scope_services() {
         let _env_guard = env_override_lock().await;
         clear_proxy_env_test_vars();
@@ -14200,7 +14199,7 @@ default_model = "persisted-profile"
         clear_proxy_env_test_vars();
     }
 
-    #[test]
+    #[tokio::test]
     async fn env_override_proxy_scope_environment_applies_process_env() {
         let _env_guard = env_override_lock().await;
         clear_proxy_env_test_vars();
@@ -14231,7 +14230,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn google_workspace_allowed_operations_require_methods() {
+    fn google_workspace_allowed_operations_require_methods() {
         let mut config = Config::default();
         config.google_workspace.allowed_operations = vec![GoogleWorkspaceAllowedOperation {
             service: "gmail".into(),
@@ -14245,8 +14244,8 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn google_workspace_allowed_operations_reject_duplicate_service_resource_sub_resource_entries(
-    ) {
+    fn google_workspace_allowed_operations_reject_duplicate_service_resource_sub_resource_entries()
+    {
         let mut config = Config::default();
         config.google_workspace.allowed_operations = vec![
             GoogleWorkspaceAllowedOperation {
@@ -14268,7 +14267,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn google_workspace_allowed_operations_allow_same_resource_different_sub_resource() {
+    fn google_workspace_allowed_operations_allow_same_resource_different_sub_resource() {
         let mut config = Config::default();
         config.google_workspace.allowed_operations = vec![
             GoogleWorkspaceAllowedOperation {
@@ -14289,7 +14288,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn google_workspace_allowed_operations_reject_duplicate_methods_within_entry() {
+    fn google_workspace_allowed_operations_reject_duplicate_methods_within_entry() {
         let mut config = Config::default();
         config.google_workspace.allowed_operations = vec![GoogleWorkspaceAllowedOperation {
             service: "gmail".into(),
@@ -14306,7 +14305,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn google_workspace_allowed_operations_accept_valid_entries() {
+    fn google_workspace_allowed_operations_accept_valid_entries() {
         let mut config = Config::default();
         config.google_workspace.allowed_operations = vec![
             GoogleWorkspaceAllowedOperation {
@@ -14327,7 +14326,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn google_workspace_allowed_operations_reject_invalid_sub_resource_characters() {
+    fn google_workspace_allowed_operations_reject_invalid_sub_resource_characters() {
         let mut config = Config::default();
         config.google_workspace.allowed_operations = vec![GoogleWorkspaceAllowedOperation {
             service: "gmail".into(),
@@ -14348,7 +14347,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn runtime_proxy_client_cache_reuses_default_profile_key() {
+    fn runtime_proxy_client_cache_reuses_default_profile_key() {
         let service_key = format!(
             "provider.cache_test.{}",
             std::time::SystemTime::now()
@@ -14369,7 +14368,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn set_runtime_proxy_config_clears_runtime_proxy_client_cache() {
+    fn set_runtime_proxy_config_clears_runtime_proxy_client_cache() {
         let service_key = format!(
             "provider.cache_timeout_test.{}",
             std::time::SystemTime::now()
@@ -14388,7 +14387,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn gateway_config_default_values() {
+    fn gateway_config_default_values() {
         let g = GatewayConfig::default();
         assert_eq!(g.port, 42617);
         assert_eq!(g.host, "127.0.0.1");
@@ -14403,14 +14402,14 @@ default_model = "persisted-profile"
     // ── Peripherals config ───────────────────────────────────────
 
     #[test]
-    async fn peripherals_config_default_disabled() {
+    fn peripherals_config_default_disabled() {
         let p = PeripheralsConfig::default();
         assert!(!p.enabled);
         assert!(p.boards.is_empty());
     }
 
     #[test]
-    async fn peripheral_board_config_defaults() {
+    fn peripheral_board_config_defaults() {
         let b = PeripheralBoardConfig::default();
         assert!(b.board.is_empty());
         assert_eq!(b.transport, "serial");
@@ -14419,7 +14418,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn peripherals_config_toml_roundtrip() {
+    fn peripherals_config_toml_roundtrip() {
         let p = PeripheralsConfig {
             enabled: true,
             boards: vec![PeripheralBoardConfig {
@@ -14439,7 +14438,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn lark_config_serde() {
+    fn lark_config_serde() {
         let lc = LarkConfig {
             app_id: "cli_123456".into(),
             app_secret: "secret_abc".into(),
@@ -14463,7 +14462,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn lark_config_toml_roundtrip() {
+    fn lark_config_toml_roundtrip() {
         let lc = LarkConfig {
             app_id: "cli_123456".into(),
             app_secret: "secret_abc".into(),
@@ -14484,7 +14483,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn lark_config_deserializes_without_optional_fields() {
+    fn lark_config_deserializes_without_optional_fields() {
         let json = r#"{"app_id":"cli_123","app_secret":"secret"}"#;
         let parsed: LarkConfig = serde_json::from_str(json).unwrap();
         assert!(parsed.encrypt_key.is_none());
@@ -14495,7 +14494,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn lark_config_defaults_to_lark_endpoint() {
+    fn lark_config_defaults_to_lark_endpoint() {
         let json = r#"{"app_id":"cli_123","app_secret":"secret"}"#;
         let parsed: LarkConfig = serde_json::from_str(json).unwrap();
         assert!(
@@ -14505,14 +14504,14 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn lark_config_with_wildcard_allowed_users() {
+    fn lark_config_with_wildcard_allowed_users() {
         let json = r#"{"app_id":"cli_123","app_secret":"secret","allowed_users":["*"]}"#;
         let parsed: LarkConfig = serde_json::from_str(json).unwrap();
         assert_eq!(parsed.allowed_users, vec!["*"]);
     }
 
     #[test]
-    async fn feishu_config_serde() {
+    fn feishu_config_serde() {
         let fc = FeishuConfig {
             app_id: "cli_feishu_123".into(),
             app_secret: "secret_abc".into(),
@@ -14533,7 +14532,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn feishu_config_toml_roundtrip() {
+    fn feishu_config_toml_roundtrip() {
         let fc = FeishuConfig {
             app_id: "cli_feishu_123".into(),
             app_secret: "secret_abc".into(),
@@ -14553,7 +14552,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn feishu_config_deserializes_without_optional_fields() {
+    fn feishu_config_deserializes_without_optional_fields() {
         let json = r#"{"app_id":"cli_123","app_secret":"secret"}"#;
         let parsed: FeishuConfig = serde_json::from_str(json).unwrap();
         assert!(parsed.encrypt_key.is_none());
@@ -14564,7 +14563,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn nextcloud_talk_config_serde() {
+    fn nextcloud_talk_config_serde() {
         let nc = NextcloudTalkConfig {
             base_url: "https://cloud.example.com".into(),
             app_token: "app-token".into(),
@@ -14582,7 +14581,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn nextcloud_talk_config_defaults_optional_fields() {
+    fn nextcloud_talk_config_defaults_optional_fields() {
         let json = r#"{"base_url":"https://cloud.example.com","app_token":"app-token"}"#;
         let parsed: NextcloudTalkConfig = serde_json::from_str(json).unwrap();
         assert!(parsed.webhook_secret.is_none());
@@ -14592,7 +14591,7 @@ default_model = "persisted-profile"
     // ── Config file permission hardening (Unix only) ───────────────
 
     #[cfg(unix)]
-    #[test]
+    #[tokio::test]
     async fn new_config_file_has_restricted_permissions() {
         let tmp = tempfile::TempDir::new().unwrap();
         let config_path = tmp.path().join("config.toml");
@@ -14611,7 +14610,7 @@ default_model = "persisted-profile"
     }
 
     #[cfg(unix)]
-    #[test]
+    #[tokio::test]
     async fn save_restricts_existing_world_readable_config_to_owner_only() {
         let tmp = tempfile::TempDir::new().unwrap();
         let config_path = tmp.path().join("config.toml");
@@ -14648,7 +14647,7 @@ default_model = "persisted-profile"
 
     #[cfg(unix)]
     #[test]
-    async fn world_readable_config_is_detectable() {
+    fn world_readable_config_is_detectable() {
         use std::os::unix::fs::PermissionsExt;
 
         let tmp = tempfile::TempDir::new().unwrap();
@@ -14667,7 +14666,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn transcription_config_defaults() {
+    fn transcription_config_defaults() {
         let tc = TranscriptionConfig::default();
         assert!(!tc.enabled);
         assert!(tc.api_url.contains("groq.com"));
@@ -14678,7 +14677,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn config_roundtrip_with_transcription() {
+    fn config_roundtrip_with_transcription() {
         let mut config = Config::default();
         config.transcription.enabled = true;
         config.transcription.language = Some("en".into());
@@ -14692,7 +14691,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn config_without_transcription_uses_defaults() {
+    fn config_without_transcription_uses_defaults() {
         let toml_str = r#"
             default_provider = "openrouter"
             default_model = "test-model"
@@ -14704,7 +14703,7 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn security_defaults_are_backward_compatible() {
+    fn security_defaults_are_backward_compatible() {
         let parsed = parse_test_config(
             r#"
 default_provider = "openrouter"
@@ -14720,7 +14719,7 @@ default_temperature = 0.7
     }
 
     #[test]
-    async fn security_toml_parses_otp_and_estop_sections() {
+    fn security_toml_parses_otp_and_estop_sections() {
         let parsed = parse_test_config(
             r#"
 default_provider = "openrouter"
@@ -14751,7 +14750,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn security_validation_rejects_invalid_domain_glob() {
+    fn security_validation_rejects_invalid_domain_glob() {
         let mut config = Config::default();
         config.security.otp.gated_domains = vec!["bad domain.com".into()];
 
@@ -14760,7 +14759,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_accepts_local_whisper_as_transcription_default_provider() {
+    fn validate_accepts_local_whisper_as_transcription_default_provider() {
         let mut config = Config::default();
         config.transcription.default_provider = "local_whisper".to_string();
 
@@ -14770,7 +14769,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_rejects_unknown_transcription_default_provider() {
+    fn validate_rejects_unknown_transcription_default_provider() {
         let mut config = Config::default();
         config.transcription.default_provider = "unknown_stt".to_string();
 
@@ -14853,7 +14852,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn security_validation_rejects_unknown_domain_category() {
+    fn security_validation_rejects_unknown_domain_category() {
         let mut config = Config::default();
         config.security.otp.gated_domain_categories = vec!["not_real".into()];
 
@@ -14864,7 +14863,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn security_validation_rejects_zero_token_ttl() {
+    fn security_validation_rejects_zero_token_ttl() {
         let mut config = Config::default();
         config.security.otp.token_ttl_secs = 0;
 
@@ -14904,13 +14903,13 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_mcp_config_empty_servers_ok() {
+    fn validate_mcp_config_empty_servers_ok() {
         let cfg = McpConfig::default();
         assert!(validate_mcp_config(&cfg).is_ok());
     }
 
     #[test]
-    async fn validate_mcp_config_valid_stdio_ok() {
+    fn validate_mcp_config_valid_stdio_ok() {
         let cfg = McpConfig {
             enabled: true,
             servers: vec![stdio_server("fs", "/usr/bin/mcp-fs")],
@@ -14920,7 +14919,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_mcp_config_valid_http_ok() {
+    fn validate_mcp_config_valid_http_ok() {
         let cfg = McpConfig {
             enabled: true,
             servers: vec![http_server("svc", "http://localhost:8080/mcp")],
@@ -14930,7 +14929,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_mcp_config_valid_sse_ok() {
+    fn validate_mcp_config_valid_sse_ok() {
         let cfg = McpConfig {
             enabled: true,
             servers: vec![sse_server("svc", "https://example.com/events")],
@@ -14940,7 +14939,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_mcp_config_rejects_empty_name() {
+    fn validate_mcp_config_rejects_empty_name() {
         let cfg = McpConfig {
             enabled: true,
             servers: vec![stdio_server("", "/usr/bin/tool")],
@@ -14954,7 +14953,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_mcp_config_rejects_whitespace_name() {
+    fn validate_mcp_config_rejects_whitespace_name() {
         let cfg = McpConfig {
             enabled: true,
             servers: vec![stdio_server("   ", "/usr/bin/tool")],
@@ -14968,7 +14967,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_mcp_config_rejects_duplicate_names() {
+    fn validate_mcp_config_rejects_duplicate_names() {
         let cfg = McpConfig {
             enabled: true,
             servers: vec![
@@ -14982,7 +14981,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_mcp_config_rejects_zero_timeout() {
+    fn validate_mcp_config_rejects_zero_timeout() {
         let mut server = stdio_server("fs", "/usr/bin/mcp-fs");
         server.tool_timeout_secs = Some(0);
         let cfg = McpConfig {
@@ -14995,7 +14994,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_mcp_config_rejects_timeout_exceeding_max() {
+    fn validate_mcp_config_rejects_timeout_exceeding_max() {
         let mut server = stdio_server("fs", "/usr/bin/mcp-fs");
         server.tool_timeout_secs = Some(MCP_MAX_TOOL_TIMEOUT_SECS + 1);
         let cfg = McpConfig {
@@ -15008,7 +15007,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_mcp_config_allows_max_timeout_exactly() {
+    fn validate_mcp_config_allows_max_timeout_exactly() {
         let mut server = stdio_server("fs", "/usr/bin/mcp-fs");
         server.tool_timeout_secs = Some(MCP_MAX_TOOL_TIMEOUT_SECS);
         let cfg = McpConfig {
@@ -15020,7 +15019,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_mcp_config_rejects_stdio_with_empty_command() {
+    fn validate_mcp_config_rejects_stdio_with_empty_command() {
         let cfg = McpConfig {
             enabled: true,
             servers: vec![stdio_server("fs", "")],
@@ -15034,7 +15033,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_mcp_config_rejects_http_without_url() {
+    fn validate_mcp_config_rejects_http_without_url() {
         let cfg = McpConfig {
             enabled: true,
             servers: vec![McpServerConfig {
@@ -15050,7 +15049,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_mcp_config_rejects_sse_without_url() {
+    fn validate_mcp_config_rejects_sse_without_url() {
         let cfg = McpConfig {
             enabled: true,
             servers: vec![McpServerConfig {
@@ -15066,7 +15065,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_mcp_config_rejects_non_http_scheme() {
+    fn validate_mcp_config_rejects_non_http_scheme() {
         let cfg = McpConfig {
             enabled: true,
             servers: vec![http_server("svc", "ftp://example.com/mcp")],
@@ -15077,7 +15076,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn validate_mcp_config_rejects_invalid_url() {
+    fn validate_mcp_config_rejects_invalid_url() {
         let cfg = McpConfig {
             enabled: true,
             servers: vec![http_server("svc", "not a url at all !!!")],
@@ -15088,14 +15087,14 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn mcp_config_default_disabled_with_empty_servers() {
+    fn mcp_config_default_disabled_with_empty_servers() {
         let cfg = McpConfig::default();
         assert!(!cfg.enabled);
         assert!(cfg.servers.is_empty());
     }
 
     #[test]
-    async fn mcp_transport_serde_roundtrip_lowercase() {
+    fn mcp_transport_serde_roundtrip_lowercase() {
         let cases = [
             (McpTransport::Stdio, "\"stdio\""),
             (McpTransport::Http, "\"http\""),
@@ -15111,7 +15110,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn swarm_strategy_roundtrip() {
+    fn swarm_strategy_roundtrip() {
         let cases = vec![
             (SwarmStrategy::Sequential, "\"sequential\""),
             (SwarmStrategy::Parallel, "\"parallel\""),
@@ -15127,7 +15126,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn swarm_config_deserializes_with_defaults() {
+    fn swarm_config_deserializes_with_defaults() {
         let toml_str = r#"
             agents = ["researcher", "writer"]
             strategy = "sequential"
@@ -15141,7 +15140,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn swarm_config_deserializes_full() {
+    fn swarm_config_deserializes_full() {
         let toml_str = r#"
             agents = ["a", "b", "c"]
             strategy = "router"
@@ -15158,7 +15157,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn config_with_swarms_section_deserializes() {
+    fn config_with_swarms_section_deserializes() {
         let toml_str = r#"
             [agents.researcher]
             provider = "ollama"
@@ -15241,14 +15240,14 @@ require_otp_to_resume = true
     // ══════════════════════════════════════════════════════════
 
     #[test]
-    async fn nevis_config_validate_disabled_accepts_empty_fields() {
+    fn nevis_config_validate_disabled_accepts_empty_fields() {
         let cfg = NevisConfig::default();
         assert!(!cfg.enabled);
         assert!(cfg.validate().is_ok());
     }
 
     #[test]
-    async fn nevis_config_validate_rejects_empty_instance_url() {
+    fn nevis_config_validate_rejects_empty_instance_url() {
         let cfg = NevisConfig {
             enabled: true,
             instance_url: String::new(),
@@ -15260,7 +15259,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn nevis_config_validate_rejects_empty_client_id() {
+    fn nevis_config_validate_rejects_empty_client_id() {
         let cfg = NevisConfig {
             enabled: true,
             instance_url: "https://nevis.example.com".into(),
@@ -15272,7 +15271,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn nevis_config_validate_rejects_empty_realm() {
+    fn nevis_config_validate_rejects_empty_realm() {
         let cfg = NevisConfig {
             enabled: true,
             instance_url: "https://nevis.example.com".into(),
@@ -15285,7 +15284,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn nevis_config_validate_rejects_local_without_jwks() {
+    fn nevis_config_validate_rejects_local_without_jwks() {
         let cfg = NevisConfig {
             enabled: true,
             instance_url: "https://nevis.example.com".into(),
@@ -15299,7 +15298,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn nevis_config_validate_rejects_zero_session_timeout() {
+    fn nevis_config_validate_rejects_zero_session_timeout() {
         let cfg = NevisConfig {
             enabled: true,
             instance_url: "https://nevis.example.com".into(),
@@ -15313,7 +15312,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn nevis_config_validate_accepts_valid_enabled_config() {
+    fn nevis_config_validate_accepts_valid_enabled_config() {
         let cfg = NevisConfig {
             enabled: true,
             instance_url: "https://nevis.example.com".into(),
@@ -15327,7 +15326,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn nevis_config_validate_rejects_invalid_token_validation() {
+    fn nevis_config_validate_rejects_invalid_token_validation() {
         let cfg = NevisConfig {
             enabled: true,
             instance_url: "https://nevis.example.com".into(),
@@ -15345,7 +15344,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn nevis_config_debug_redacts_client_secret() {
+    fn nevis_config_debug_redacts_client_secret() {
         let cfg = NevisConfig {
             client_secret: Some("super-secret".into()),
             ..NevisConfig::default()
@@ -15362,7 +15361,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn telegram_config_ack_reactions_false_deserializes() {
+    fn telegram_config_ack_reactions_false_deserializes() {
         let toml_str = r#"
             bot_token = "123:ABC"
             allowed_users = ["alice"]
@@ -15373,7 +15372,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn telegram_config_ack_reactions_true_deserializes() {
+    fn telegram_config_ack_reactions_true_deserializes() {
         let toml_str = r#"
             bot_token = "123:ABC"
             allowed_users = ["alice"]
@@ -15384,7 +15383,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn telegram_config_ack_reactions_missing_defaults_to_none() {
+    fn telegram_config_ack_reactions_missing_defaults_to_none() {
         let toml_str = r#"
             bot_token = "123:ABC"
             allowed_users = ["alice"]
@@ -15394,7 +15393,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn telegram_config_ack_reactions_channel_overrides_top_level() {
+    fn telegram_config_ack_reactions_channel_overrides_top_level() {
         let tg_toml = r#"
             bot_token = "123:ABC"
             allowed_users = ["alice"]
@@ -15410,7 +15409,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn telegram_config_ack_reactions_falls_back_to_top_level() {
+    fn telegram_config_ack_reactions_falls_back_to_top_level() {
         let tg_toml = r#"
             bot_token = "123:ABC"
             allowed_users = ["alice"]
@@ -15425,7 +15424,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn google_workspace_allowed_operations_deserialize_from_toml() {
+    fn google_workspace_allowed_operations_deserialize_from_toml() {
         let toml_str = r#"
             enabled = true
 
@@ -15451,7 +15450,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn google_workspace_allowed_operations_deserialize_without_sub_resource() {
+    fn google_workspace_allowed_operations_deserialize_without_sub_resource() {
         let toml_str = r#"
             enabled = true
 
@@ -15466,7 +15465,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn config_validate_accepts_google_workspace_allowed_operations() {
+    fn config_validate_accepts_google_workspace_allowed_operations() {
         let mut cfg = Config::default();
         cfg.google_workspace.enabled = true;
         cfg.google_workspace.allowed_services = vec!["gmail".into()];
@@ -15481,7 +15480,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn config_validate_rejects_duplicate_google_workspace_allowed_operations() {
+    fn config_validate_rejects_duplicate_google_workspace_allowed_operations() {
         let mut cfg = Config::default();
         cfg.google_workspace.enabled = true;
         cfg.google_workspace.allowed_services = vec!["gmail".into()];
@@ -15505,7 +15504,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn config_validate_rejects_operation_service_not_in_allowed_services() {
+    fn config_validate_rejects_operation_service_not_in_allowed_services() {
         let mut cfg = Config::default();
         cfg.google_workspace.enabled = true;
         cfg.google_workspace.allowed_services = vec!["gmail".into()];
@@ -15524,7 +15523,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn config_validate_accepts_default_service_when_allowed_services_empty() {
+    fn config_validate_accepts_default_service_when_allowed_services_empty() {
         // When allowed_services is empty the validator uses DEFAULT_GWS_SERVICES.
         // A known default service must pass.
         let mut cfg = Config::default();
@@ -15541,7 +15540,7 @@ require_otp_to_resume = true
     }
 
     #[test]
-    async fn config_validate_rejects_unknown_service_when_allowed_services_empty() {
+    fn config_validate_rejects_unknown_service_when_allowed_services_empty() {
         // Even with allowed_services empty (using defaults), an operation whose
         // service is not in DEFAULT_GWS_SERVICES must fail validation — not silently
         // pass through to be rejected at runtime.
@@ -15607,7 +15606,7 @@ require_otp_to_resume = true
     // ── PacingConfig serde defaults ─────────────────────────────
 
     #[test]
-    async fn pacing_config_serde_defaults_match_manual_default() {
+    fn pacing_config_serde_defaults_match_manual_default() {
         // Deserialise an empty TOML table and verify the loop-detection
         // fields receive the same defaults as `PacingConfig::default()`.
         let from_toml: PacingConfig = toml::from_str("").unwrap();
