@@ -6677,6 +6677,7 @@ pub struct MatrixConfig {
     pub multi_message_delay_ms: u64,
     /// Optional Matrix recovery key for automatic E2EE key backup restore.
     /// When set, ZeroClaw recovers room keys and cross-signing secrets on startup.
+    #[secret]
     #[serde(default)]
     pub recovery_key: Option<String>,
 }
