@@ -9457,9 +9457,9 @@ impl Config {
             &self.security.otp.gated_domains,
             &self.security.otp.gated_domain_categories,
         )
-        .with_context(|| {
-            "Invalid security.otp.gated_domains or security.otp.gated_domain_categories"
-        })?;
+        .with_context(
+            || "Invalid security.otp.gated_domains or security.otp.gated_domain_categories",
+        )?;
         if self.security.estop.state_file.trim().is_empty() {
             anyhow::bail!("security.estop.state_file must not be empty");
         }
@@ -9644,7 +9644,9 @@ impl Config {
                     .as_deref()
                     .map_or(true, |s| s.trim().is_empty())
             {
-                anyhow::bail!("microsoft365.client_secret must not be empty when auth_flow is client_credentials");
+                anyhow::bail!(
+                    "microsoft365.client_secret must not be empty when auth_flow is client_credentials"
+                );
             }
         }
 
@@ -10063,7 +10065,7 @@ impl Config {
         // Skills script-file audit override: ZEROCLAW_SKILLS_ALLOW_SCRIPTS
         if let Ok(flag) = std::env::var("ZEROCLAW_SKILLS_ALLOW_SCRIPTS") {
             if !flag.trim().is_empty() {
-                match flag.trim().to_ascii_lowercase().as_str(){
+                match flag.trim().to_ascii_lowercase().as_str() {
                     "1" | "true" | "yes" | "on" => self.skills.allow_scripts = true,
                     "0" | "false" | "no" | "off" => self.skills.allow_scripts = false,
                     _ => tracing::warn!(
@@ -10899,8 +10901,8 @@ mod tests {
     use tempfile::TempDir;
     use tokio::sync::{Mutex, MutexGuard};
     use tokio::test;
-    use tokio_stream::wrappers::ReadDirStream;
     use tokio_stream::StreamExt;
+    use tokio_stream::wrappers::ReadDirStream;
 
     // ── Tilde expansion ───────────────────────────────────────
 
@@ -11992,10 +11994,12 @@ default_temperature = 0.7
 
         let contents = tokio::fs::read_to_string(&config_path).await.unwrap();
         let loaded: Config = toml::from_str(&contents).unwrap();
-        assert!(loaded
-            .api_key
-            .as_deref()
-            .is_some_and(crate::security::SecretStore::is_encrypted));
+        assert!(
+            loaded
+                .api_key
+                .as_deref()
+                .is_some_and(crate::security::SecretStore::is_encrypted)
+        );
         let store = crate::security::SecretStore::new(&dir, true);
         let decrypted = store.decrypt(loaded.api_key.as_deref().unwrap()).unwrap();
         assert_eq!(decrypted, "sk-roundtrip");
@@ -12106,20 +12110,24 @@ default_temperature = 0.7
             &feishu.app_secret
         ));
         assert_eq!(store.decrypt(&feishu.app_secret).unwrap(), "feishu-secret");
-        assert!(feishu
-            .encrypt_key
-            .as_deref()
-            .is_some_and(crate::security::SecretStore::is_encrypted));
+        assert!(
+            feishu
+                .encrypt_key
+                .as_deref()
+                .is_some_and(crate::security::SecretStore::is_encrypted)
+        );
         assert_eq!(
             store
                 .decrypt(feishu.encrypt_key.as_deref().unwrap())
                 .unwrap(),
             "feishu-encrypt"
         );
-        assert!(feishu
-            .verification_token
-            .as_deref()
-            .is_some_and(crate::security::SecretStore::is_encrypted));
+        assert!(
+            feishu
+                .verification_token
+                .as_deref()
+                .is_some_and(crate::security::SecretStore::is_encrypted)
+        );
         assert_eq!(
             store
                 .decrypt(feishu.verification_token.as_deref().unwrap())
@@ -13583,9 +13591,11 @@ requires_openai_auth = true
         };
 
         let error = config.validate().expect_err("expected validation failure");
-        assert!(error
-            .to_string()
-            .contains("wire_api must be one of: responses, chat_completions"));
+        assert!(
+            error
+                .to_string()
+                .contains("wire_api must be one of: responses, chat_completions")
+        );
     }
 
     #[test]
@@ -14399,10 +14409,12 @@ default_model = "persisted-profile"
         // SAFETY: test-only, single-threaded test runner.
         unsafe { std::env::set_var("ZEROCLAW_HTTP_PROXY", "http://127.0.0.1:7890") };
         // SAFETY: test-only, single-threaded test runner.
-        unsafe { std::env::set_var(
-            "ZEROCLAW_PROXY_SERVICES",
-            "provider.openai, tool.http_request",
-        ) };
+        unsafe {
+            std::env::set_var(
+                "ZEROCLAW_PROXY_SERVICES",
+                "provider.openai, tool.http_request",
+            );
+        }
         // SAFETY: test-only, single-threaded test runner.
         unsafe { std::env::set_var("ZEROCLAW_PROXY_SCOPE", "services") };
 
@@ -14449,9 +14461,11 @@ default_model = "persisted-profile"
             std::env::var("HTTPS_PROXY").ok().as_deref(),
             Some("http://127.0.0.1:7891")
         );
-        assert!(std::env::var("NO_PROXY")
-            .ok()
-            .is_some_and(|value| value.contains("localhost")));
+        assert!(
+            std::env::var("NO_PROXY")
+                .ok()
+                .is_some_and(|value| value.contains("localhost"))
+        );
 
         clear_proxy_env_test_vars();
     }
@@ -14471,8 +14485,8 @@ default_model = "persisted-profile"
     }
 
     #[test]
-    async fn google_workspace_allowed_operations_reject_duplicate_service_resource_sub_resource_entries(
-    ) {
+    async fn google_workspace_allowed_operations_reject_duplicate_service_resource_sub_resource_entries()
+     {
         let mut config = Config::default();
         config.google_workspace.allowed_operations = vec![
             GoogleWorkspaceAllowedOperation {

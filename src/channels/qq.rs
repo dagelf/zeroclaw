@@ -1363,7 +1363,9 @@ impl Channel for QQChannel {
             }
             ExitReason::Reconnect => {
                 // Session state preserved — supervisor will reconnect and we'll attempt Resume
-                anyhow::bail!("QQ WebSocket connection closed: server requested reconnect (resume will be attempted)")
+                anyhow::bail!(
+                    "QQ WebSocket connection closed: server requested reconnect (resume will be attempted)"
+                )
             }
             ExitReason::Close(ref frame) => {
                 let (code, reason) = frame
@@ -1379,7 +1381,9 @@ impl Channel for QQChannel {
                 )
             }
             ExitReason::StreamEnded => {
-                tracing::warn!("QQ: WebSocket stream ended unexpectedly; resume will be attempted on reconnect");
+                tracing::warn!(
+                    "QQ: WebSocket stream ended unexpectedly; resume will be attempted on reconnect"
+                );
                 anyhow::bail!("QQ WebSocket connection closed: stream ended unexpectedly")
             }
             ExitReason::HeartbeatTimeout => {

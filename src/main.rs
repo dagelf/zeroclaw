@@ -33,14 +33,14 @@
     dead_code
 )]
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use clap::{CommandFactory, Parser, Subcommand, ValueEnum};
 use dialoguer::Password;
 use serde::{Deserialize, Serialize};
 use std::io::{IsTerminal, Write};
 use std::path::PathBuf;
 use tracing::{info, warn};
-use tracing_subscriber::{fmt, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt};
 
 fn parse_temperature(s: &str) -> std::result::Result<f64, String> {
     let t: f64 = s.parse().map_err(|e| format!("{e}"))?;
@@ -1104,8 +1104,12 @@ async fn main() -> Result<()> {
                         }
                         Ok(None) => {
                             if config.gateway.require_pairing {
-                                println!("🔐 Gateway pairing is enabled, but no active pairing code available.");
-                                println!("   The gateway may already be paired, or the code has been used.");
+                                println!(
+                                    "🔐 Gateway pairing is enabled, but no active pairing code available."
+                                );
+                                println!(
+                                    "   The gateway may already be paired, or the code has been used."
+                                );
                                 println!("   Restart the gateway to generate a new pairing code.");
                             } else {
                                 println!("⚠️  Gateway pairing is disabled in config.");

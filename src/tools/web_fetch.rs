@@ -189,7 +189,7 @@ impl WebFetchTool {
                     success: false,
                     output: String::new(),
                     error: Some(format!("HTTP request failed: {e}")),
-                }
+                };
             }
         };
 
@@ -239,7 +239,7 @@ impl WebFetchTool {
                     success: false,
                     output: String::new(),
                     error: Some(format!("Failed to read response body: {e}")),
-                }
+                };
             }
         };
 
@@ -316,7 +316,7 @@ impl Tool for WebFetchTool {
                     success: false,
                     output: String::new(),
                     error: Some(e.to_string()),
-                })
+                });
             }
         };
 
@@ -365,7 +365,7 @@ impl Tool for WebFetchTool {
                     success: false,
                     output: String::new(),
                     error: Some(format!("Failed to build HTTP client: {e}")),
-                })
+                });
             }
         };
 
@@ -877,14 +877,16 @@ mod tests {
     fn redirect_target_validation_allows_permitted_host() {
         let allowed = vec!["example.com".to_string()];
         let blocked = vec![];
-        assert!(validate_target_url(
-            "https://docs.example.com/page",
-            &allowed,
-            &blocked,
-            &[],
-            "web_fetch"
-        )
-        .is_ok());
+        assert!(
+            validate_target_url(
+                "https://docs.example.com/page",
+                &allowed,
+                &blocked,
+                &[],
+                "web_fetch"
+            )
+            .is_ok()
+        );
     }
 
     #[test]
