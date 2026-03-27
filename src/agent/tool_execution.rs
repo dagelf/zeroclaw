@@ -96,8 +96,9 @@ pub(crate) async fn execute_one_tool(
             });
             if r.success {
                 let output = scrub_credentials(&r.output);
-                let receipt = receipt_generator
-                    .map(|receipt_gen| receipt_gen.generate_now(call_name, &call_arguments, &output));
+                let receipt = receipt_generator.map(|receipt_gen| {
+                    receipt_gen.generate_now(call_name, &call_arguments, &output)
+                });
                 Ok(ToolExecutionOutcome {
                     output,
                     success: true,
