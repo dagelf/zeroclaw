@@ -1148,6 +1148,7 @@ impl DelegateTool {
                 None, // shared_budget: TODO thread from parent in future
                 None, // receipt_generator: TODO thread from parent in future
                 None, // collected_receipts
+                false, // native_tool_calls_only: use text fallback for subagents
             ),
         )
         .await;
