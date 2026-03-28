@@ -1003,6 +1003,9 @@ pub struct NodesConfig {
     /// Optional bearer token for node authentication.
     #[serde(default)]
     pub auth_token: Option<String>,
+    /// mDNS local peer discovery.
+    #[serde(default)]
+    pub mdns: crate::nodes::MdnsConfig,
 }
 
 fn default_max_nodes() -> usize {
@@ -1015,6 +1018,7 @@ impl Default for NodesConfig {
             enabled: false,
             max_nodes: default_max_nodes(),
             auth_token: None,
+            mdns: crate::nodes::MdnsConfig::default(),
         }
     }
 }
