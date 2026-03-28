@@ -113,6 +113,7 @@ pub fn should_skip_autosave_content(content: &str) -> bool {
     lowered.starts_with("[cron:")
         || lowered.starts_with("[heartbeat task")
         || lowered.starts_with("[distilled_")
+        || lowered.starts_with("[memory context]")
         || lowered.contains("distilled_index_sig:")
 }
 
@@ -447,6 +448,20 @@ mod tests {
         ));
         assert!(!should_skip_autosave_content(
             "User prefers concise answers."
+        ));
+    }
+
+    #[test]
+    fn autosave_content_filter_drops_memory_context_recall_blobs() {
+        assert!(should_skip_autosave_content(
+            "[Memory context] Here are relevant memories for this conversation..."
+        ));
+        assert!(should_skip_autosave_content(
+            "[MEMORY CONTEXT] recall blob with previous entries"
+        ));
+        // Legitimate user content must not be filtered
+        assert!(!should_skip_autosave_content(
+            "Remember this memory context for later."
         ));
     }
 
