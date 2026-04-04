@@ -164,19 +164,19 @@ export default function Memory() {
                 <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--pc-text-secondary)' }}>
                   {t('memory.key_required')} <span style={{ color: 'var(--color-status-error)' }}>*</span>
                 </label>
-                <input type="text" value={formKey} onChange={(e) => setFormKey(e.target.value)} placeholder="e.g. user_preferences" className="input-electric w-full px-3 py-2.5 text-sm" />
+                <input type="text" value={formKey} onChange={(e) => setFormKey(e.target.value)} placeholder={t('memory.placeholder_key')} className="input-electric w-full px-3 py-2.5 text-sm" />
               </div>
               <div>
                 <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--pc-text-secondary)' }}>
                   {t('memory.content_required')} <span style={{ color: 'var(--color-status-error)' }}>*</span>
                 </label>
-                <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder="Memory content..." rows={4} className="input-electric w-full px-3 py-2.5 text-sm resize-none" />
+                <textarea value={formContent} onChange={(e) => setFormContent(e.target.value)} placeholder={t('memory.placeholder_content')} rows={4} className="input-electric w-full px-3 py-2.5 text-sm resize-none" />
               </div>
               <div>
                 <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--pc-text-secondary)' }}>
                   {t('memory.category_optional')}
                 </label>
-                <input type="text" value={formCategory} onChange={(e) => setFormCategory(e.target.value)} placeholder="e.g. preferences, context, facts" className="input-electric w-full px-3 py-2.5 text-sm" />
+                <input type="text" value={formCategory} onChange={(e) => setFormCategory(e.target.value)} placeholder={t('memory.placeholder_category')} className="input-electric w-full px-3 py-2.5 text-sm" />
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">

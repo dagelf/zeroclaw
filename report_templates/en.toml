@@ -1,0 +1,77 @@
+# English report templates (default locale)
+
+[weekly_status]
+name = "Weekly Status"
+
+[[weekly_status.sections]]
+heading = "Summary"
+body = "Project: {{project_name}} | Period: {{period}}"
+
+[[weekly_status.sections]]
+heading = "Completed"
+body = "{{completed}}"
+
+[[weekly_status.sections]]
+heading = "In Progress"
+body = "{{in_progress}}"
+
+[[weekly_status.sections]]
+heading = "Blocked"
+body = "{{blocked}}"
+
+[[weekly_status.sections]]
+heading = "Next Steps"
+body = "{{next_steps}}"
+
+[sprint_review]
+name = "Sprint Review"
+
+[[sprint_review.sections]]
+heading = "Sprint"
+body = "{{sprint_dates}}"
+
+[[sprint_review.sections]]
+heading = "Completed"
+body = "{{completed}}"
+
+[[sprint_review.sections]]
+heading = "In Progress"
+body = "{{in_progress}}"
+
+[[sprint_review.sections]]
+heading = "Blocked"
+body = "{{blocked}}"
+
+[[sprint_review.sections]]
+heading = "Velocity"
+body = "{{velocity}}"
+
+[risk_register]
+name = "Risk Register"
+
+[[risk_register.sections]]
+heading = "Project"
+body = "{{project_name}}"
+
+[[risk_register.sections]]
+heading = "Risks"
+body = "{{risks}}"
+
+[[risk_register.sections]]
+heading = "Mitigations"
+body = "{{mitigations}}"
+
+[milestone_report]
+name = "Milestone Report"
+
+[[milestone_report.sections]]
+heading = "Project"
+body = "{{project_name}}"
+
+[[milestone_report.sections]]
+heading = "Milestones"
+body = "{{milestones}}"
+
+[[milestone_report.sections]]
+heading = "Status"
+body = "{{status}}"

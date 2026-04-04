@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { LogOut, Menu, Settings, ChevronDown } from 'lucide-react';
-import { t, SUPPORTED_LOCALES } from '@/lib/i18n';
+import { t, SUPPORTED_LOCALES, type TranslationKey } from '@/lib/i18n';
 import { useLocaleContext } from '@/App';
 import { useAuth } from '@/hooks/useAuth';
 import { SettingsModal } from '@/components/SettingsModal';
 
-const routeTitles: Record<string, string> = {
+const routeTitles: Record<string, TranslationKey> = {
   '/': 'nav.dashboard',
   '/agent': 'nav.agent',
   '/tools': 'nav.tools',
@@ -31,7 +31,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
 
-  const titleKey = routeTitles[location.pathname] ?? 'nav.dashboard';
+  const titleKey: TranslationKey = routeTitles[location.pathname] ?? 'nav.dashboard';
   const pageTitle = t(titleKey);
   const currentFlag = SUPPORTED_LOCALES.find((l) => l.code === locale)?.flag ?? '🌐';
 

@@ -16,7 +16,7 @@ import {
 import type { StatusResponse, CostSummary, Session, ChannelDetail } from '@/types/api';
 import { getStatus, getCost, getSessions, getChannels } from '@/lib/api';
 import { useSSE } from '@/hooks/useSSE';
-import { t } from '@/lib/i18n';
+import { t, type TranslationKey } from '@/lib/i18n';
 
 type TabId = 'overview' | 'sessions' | 'channels';
 
@@ -99,7 +99,7 @@ function healthBg(status: string): string {
   }
 }
 
-const STATUS_CARDS = [
+const STATUS_CARDS: { icon: typeof Cpu; accent: string; labelKey: TranslationKey; getValue: (s: StatusResponse) => string; getSub: (s: StatusResponse) => string }[] = [
   {
     icon: Cpu,
     accent: "var(--pc-accent)",
@@ -131,7 +131,7 @@ const STATUS_CARDS = [
   },
 ];
 
-const TABS: { id: TabId; labelKey: string; icon: typeof LayoutDashboard }[] = [
+const TABS: { id: TabId; labelKey: TranslationKey; icon: typeof LayoutDashboard }[] = [
   { id: 'overview', labelKey: 'dashboard.tab_overview', icon: LayoutDashboard },
   { id: 'sessions', labelKey: 'dashboard.tab_sessions', icon: Users },
   { id: 'channels', labelKey: 'dashboard.tab_channels', icon: Wifi },

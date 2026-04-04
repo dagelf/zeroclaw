@@ -1,0 +1,77 @@
+# French report templates
+
+[weekly_status]
+name = "Statut hebdomadaire"
+
+[[weekly_status.sections]]
+heading = "Resume"
+body = "Projet: {{project_name}} | Periode: {{period}}"
+
+[[weekly_status.sections]]
+heading = "Termine"
+body = "{{completed}}"
+
+[[weekly_status.sections]]
+heading = "En cours"
+body = "{{in_progress}}"
+
+[[weekly_status.sections]]
+heading = "Bloque"
+body = "{{blocked}}"
+
+[[weekly_status.sections]]
+heading = "Prochaines etapes"
+body = "{{next_steps}}"
+
+[sprint_review]
+name = "Revue de sprint"
+
+[[sprint_review.sections]]
+heading = "Sprint"
+body = "{{sprint_dates}}"
+
+[[sprint_review.sections]]
+heading = "Termine"
+body = "{{completed}}"
+
+[[sprint_review.sections]]
+heading = "En cours"
+body = "{{in_progress}}"
+
+[[sprint_review.sections]]
+heading = "Bloque"
+body = "{{blocked}}"
+
+[[sprint_review.sections]]
+heading = "Velocite"
+body = "{{velocity}}"
+
+[risk_register]
+name = "Registre des risques"
+
+[[risk_register.sections]]
+heading = "Projet"
+body = "{{project_name}}"
+
+[[risk_register.sections]]
+heading = "Risques"
+body = "{{risks}}"
+
+[[risk_register.sections]]
+heading = "Mesures"
+body = "{{mitigations}}"
+
+[milestone_report]
+name = "Rapport de jalons"
+
+[[milestone_report.sections]]
+heading = "Projet"
+body = "{{project_name}}"
+
+[[milestone_report.sections]]
+heading = "Jalons"
+body = "{{milestones}}"
+
+[[milestone_report.sections]]
+heading = "Statut"
+body = "{{status}}"

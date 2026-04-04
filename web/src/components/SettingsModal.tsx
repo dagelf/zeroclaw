@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { X, Settings, Sun, Moon, Monitor, Laptop, Check, Type, CaseSensitive, Palette } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
-import { t } from '@/lib/i18n';
+import { t, type TranslationKey } from '@/lib/i18n';
 import type { AccentColor, UiFont, MonoFont, ThemeMode } from '@/contexts/ThemeContextDef';
 import { uiFontStacks, monoFontStacks } from '@/contexts/ThemeContextDef';
 import { colorThemes } from '@/contexts/colorThemes';
 
-const themeOptions: { value: ThemeMode; icon: typeof Sun; labelKey: string }[] = [
+const themeOptions: { value: ThemeMode; icon: typeof Sun; labelKey: TranslationKey }[] = [
   { value: 'system', icon: Laptop, labelKey: 'theme.system' },
   { value: 'dark', icon: Moon, labelKey: 'theme.dark' },
   { value: 'light', icon: Sun, labelKey: 'theme.light' },
@@ -131,7 +131,7 @@ export function SettingsModal({ open, onClose }: Props) {
 
   const tabs: { id: TabId; label: string; icon: typeof Palette }[] = useMemo(() => [
     { id: 'appearance', label: t('settings.tab.appearance'), icon: Settings },
-    { id: 'themes', label: 'Themes', icon: Palette },
+    { id: 'themes', label: t('settings.tab.themes'), icon: Palette },
     { id: 'typography', label: t('settings.tab.typography'), icon: Type },
   ], []);
 
@@ -268,7 +268,7 @@ export function SettingsModal({ open, onClose }: Props) {
           {/* Themes Tab */}
           {tab === 'themes' && (
             <>
-              <SectionTitle>Dark Themes</SectionTitle>
+              <SectionTitle>{t('settings.dark_themes')}</SectionTitle>
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
                 {darkThemes.map(ct => (
                   <ThemePreviewCard
@@ -280,7 +280,7 @@ export function SettingsModal({ open, onClose }: Props) {
                 ))}
               </div>
 
-              <SectionTitle>Light Themes</SectionTitle>
+              <SectionTitle>{t('settings.light_themes')}</SectionTitle>
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
                 {lightThemes.map(ct => (
                   <ThemePreviewCard
@@ -306,7 +306,7 @@ export function SettingsModal({ open, onClose }: Props) {
                     className="text-[10px] px-1.5 py-0.5 rounded-full"
                     style={{ background: 'var(--pc-accent-glow)', color: 'var(--pc-accent-light)' }}
                   >
-                    Active
+                    {t('settings.active')}
                   </span>
                 </div>
               </div>

@@ -59,7 +59,7 @@ function RunHistoryPanel({ jobId }: { jobId: string }) {
     return (
       <div className="flex items-center gap-2 px-4 py-3 text-xs" style={{ color: 'var(--pc-text-muted)' }}>
         <div className="h-4 w-4 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--pc-border)', borderTopColor: 'var(--pc-accent)' }} />
-        Loading run history...
+        {t('cron.loading_runs')}
       </div>
     );
   }
@@ -366,13 +366,13 @@ export default function Cron() {
                 <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--pc-text-secondary)' }}>
                   {t('cron.name_optional')}
                 </label>
-                <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="e.g. Daily cleanup" className="input-electric w-full px-3 py-2.5 text-sm" />
+                <input type="text" value={formName} onChange={(e) => setFormName(e.target.value)} placeholder={t('cron.placeholder_name')} className="input-electric w-full px-3 py-2.5 text-sm" />
               </div>
               <div>
                 <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--pc-text-secondary)' }}>
                   {t('cron.schedule_required')} <span style={{ color: 'var(--color-status-error)' }}>*</span>
                 </label>
-                <input type="text" value={formSchedule} onChange={(e) => setFormSchedule(e.target.value)} placeholder="e.g. 0 0 * * * (cron expression)" className="input-electric w-full px-3 py-2.5 text-sm" />
+                <input type="text" value={formSchedule} onChange={(e) => setFormSchedule(e.target.value)} placeholder={t('cron.placeholder_schedule')} className="input-electric w-full px-3 py-2.5 text-sm" />
               </div>
               <div>
                 <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--pc-text-secondary)' }}>
@@ -381,7 +381,7 @@ export default function Cron() {
                 <textarea
                   value={formCommand}
                   onChange={(e) => setFormCommand(e.target.value)}
-                  placeholder="e.g. cleanup --older-than 7d"
+                  placeholder={t('cron.placeholder_command')}
                   rows={4}
                   className="input-electric w-full px-3 py-2.5 text-sm resize-y"
                 />

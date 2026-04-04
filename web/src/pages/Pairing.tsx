@@ -30,7 +30,7 @@ export default function Pairing() {
         setDevices(data.devices || []);
       }
     } catch (err) {
-      setError('Failed to load devices');
+      setError(t('pairing.load_error'));
     } finally {
       setLoading(false);
     }
@@ -61,10 +61,10 @@ export default function Pairing() {
         const data = await res.json();
         setPairingCode(data.pairing_code);
       } else {
-        setError('Failed to generate pairing code');
+        setError(t('pairing.generate_error'));
       }
     } catch (err) {
-      setError('Failed to generate pairing code');
+      setError(t('pairing.generate_error'));
     }
   };
 
@@ -78,7 +78,7 @@ export default function Pairing() {
         setDevices(devices.filter(d => d.id !== deviceId));
       }
     } catch (err) {
-      setError('Failed to revoke device');
+      setError(t('pairing.revoke_error'));
     }
   };
 

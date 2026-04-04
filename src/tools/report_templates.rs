@@ -1,10 +1,12 @@
 //! Report template engine for project delivery intelligence.
 //!
-//! Provides built-in templates for weekly status, sprint review, risk register,
-//! and milestone reports with multi-language support (EN, DE, FR, IT).
+//! Loads templates from TOML locale files in `report_templates/` with English
+//! fallback, matching the `tool_descriptions/` i18n pattern from `src/i18n.rs`.
 
 use std::collections::HashMap;
 use std::fmt::Write as _;
+use std::path::PathBuf;
+use tracing::debug;
 
 /// Supported report output formats.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -93,392 +95,194 @@ fn substitute(template: &str, vars: &HashMap<String, String>) -> String {
     result
 }
 
-// ── Built-in templates ────────────────────────────────────────────
+// ── TOML deserialization structures ─────────────────────────────────
+
+#[derive(Debug, serde::Deserialize)]
+struct TomlSection {
+    heading: String,
+    body: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct TomlTemplate {
+    name: String,
+    #[serde(default)]
+    sections: Vec<TomlSection>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct TomlTemplateFile {
+    weekly_status: Option<TomlTemplate>,
+    sprint_review: Option<TomlTemplate>,
+    risk_register: Option<TomlTemplate>,
+    milestone_report: Option<TomlTemplate>,
+}
+
+/// Try to load and parse a report template TOML file from the first matching search dir.
+fn load_template_file(locale: &str, search_dirs: &[PathBuf]) -> Option<TomlTemplateFile> {
+    let filename = format!("report_templates/{locale}.toml");
+
+    for dir in search_dirs {
+        let path = dir.join(&filename);
+        match std::fs::read_to_string(&path) {
+            Ok(contents) => match toml::from_str::<TomlTemplateFile>(&contents) {
+                Ok(parsed) => {
+                    debug!(path = %path.display(), locale = locale, "loaded report template file");
+                    return Some(parsed);
+                }
+                Err(e) => {
+                    debug!(path = %path.display(), error = %e, "failed to parse report template file");
+                }
+            },
+            Err(_) => {}
+        }
+    }
+    None
+}
+
+/// Extract a specific template from a parsed TOML file.
+fn extract_template(file: &TomlTemplateFile, template_name: &str) -> Option<ReportTemplate> {
+    let toml_tpl = match template_name {
+        "weekly_status" => file.weekly_status.as_ref(),
+        "sprint_review" => file.sprint_review.as_ref(),
+        "risk_register" => file.risk_register.as_ref(),
+        "milestone_report" => file.milestone_report.as_ref(),
+        _ => None,
+    }?;
+
+    Some(ReportTemplate {
+        name: toml_tpl.name.clone(),
+        sections: toml_tpl
+            .sections
+            .iter()
+            .map(|s| TemplateSection {
+                heading: s.heading.clone(),
+                body: s.body.clone(),
+            })
+            .collect(),
+        format: ReportFormat::Markdown,
+    })
+}
+
+/// Build the default set of search directories for report template files.
+fn default_search_dirs() -> Vec<PathBuf> {
+    let mut dirs = Vec::new();
+
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(parent) = exe.parent() {
+            dirs.push(parent.to_path_buf());
+        }
+    }
+
+    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    if !dirs.contains(&manifest_dir) {
+        dirs.push(manifest_dir);
+    }
+
+    dirs
+}
+
+/// Load a named template for the given language from TOML files.
+///
+/// Resolution order:
+/// 1. `report_templates/{lang}.toml`
+/// 2. `report_templates/en.toml` (English fallback)
+/// 3. Hardcoded English default (always available)
+fn load_template(template_name: &str, lang: &str) -> ReportTemplate {
+    let search_dirs = default_search_dirs();
+
+    // Try the requested locale first.
+    if let Some(file) = load_template_file(lang, &search_dirs) {
+        if let Some(tpl) = extract_template(&file, template_name) {
+            return tpl;
+        }
+    }
+
+    // Fallback to English TOML file.
+    if lang != "en" {
+        if let Some(file) = load_template_file("en", &search_dirs) {
+            if let Some(tpl) = extract_template(&file, template_name) {
+                return tpl;
+            }
+        }
+    }
+
+    // Hardcoded English fallback (always available, no file dependency).
+    hardcoded_english(template_name)
+}
+
+/// Hardcoded English templates as a final fallback when no TOML files are found.
+fn hardcoded_english(template_name: &str) -> ReportTemplate {
+    match template_name {
+        "weekly_status" => ReportTemplate {
+            name: "Weekly Status".into(),
+            sections: vec![
+                TemplateSection { heading: "Summary".into(), body: "Project: {{project_name}} | Period: {{period}}".into() },
+                TemplateSection { heading: "Completed".into(), body: "{{completed}}".into() },
+                TemplateSection { heading: "In Progress".into(), body: "{{in_progress}}".into() },
+                TemplateSection { heading: "Blocked".into(), body: "{{blocked}}".into() },
+                TemplateSection { heading: "Next Steps".into(), body: "{{next_steps}}".into() },
+            ],
+            format: ReportFormat::Markdown,
+        },
+        "sprint_review" => ReportTemplate {
+            name: "Sprint Review".into(),
+            sections: vec![
+                TemplateSection { heading: "Sprint".into(), body: "{{sprint_dates}}".into() },
+                TemplateSection { heading: "Completed".into(), body: "{{completed}}".into() },
+                TemplateSection { heading: "In Progress".into(), body: "{{in_progress}}".into() },
+                TemplateSection { heading: "Blocked".into(), body: "{{blocked}}".into() },
+                TemplateSection { heading: "Velocity".into(), body: "{{velocity}}".into() },
+            ],
+            format: ReportFormat::Markdown,
+        },
+        "risk_register" => ReportTemplate {
+            name: "Risk Register".into(),
+            sections: vec![
+                TemplateSection { heading: "Project".into(), body: "{{project_name}}".into() },
+                TemplateSection { heading: "Risks".into(), body: "{{risks}}".into() },
+                TemplateSection { heading: "Mitigations".into(), body: "{{mitigations}}".into() },
+            ],
+            format: ReportFormat::Markdown,
+        },
+        _ => ReportTemplate {
+            name: "Milestone Report".into(),
+            sections: vec![
+                TemplateSection { heading: "Project".into(), body: "{{project_name}}".into() },
+                TemplateSection { heading: "Milestones".into(), body: "{{milestones}}".into() },
+                TemplateSection { heading: "Status".into(), body: "{{status}}".into() },
+            ],
+            format: ReportFormat::Markdown,
+        },
+    }
+}
+
+// ── Public API (preserves existing signatures) ──────────────────────
 
 /// Return the built-in weekly status template for the given language.
 pub fn weekly_status_template(lang: &str) -> ReportTemplate {
-    let (name, sections) = match lang {
-        "de" => (
-            "Wochenstatus",
-            vec![
-                TemplateSection {
-                    heading: "Zusammenfassung".into(),
-                    body: "Projekt: {{project_name}} | Zeitraum: {{period}}".into(),
-                },
-                TemplateSection {
-                    heading: "Erledigt".into(),
-                    body: "{{completed}}".into(),
-                },
-                TemplateSection {
-                    heading: "In Bearbeitung".into(),
-                    body: "{{in_progress}}".into(),
-                },
-                TemplateSection {
-                    heading: "Blockiert".into(),
-                    body: "{{blocked}}".into(),
-                },
-                TemplateSection {
-                    heading: "Naechste Schritte".into(),
-                    body: "{{next_steps}}".into(),
-                },
-            ],
-        ),
-        "fr" => (
-            "Statut hebdomadaire",
-            vec![
-                TemplateSection {
-                    heading: "Resume".into(),
-                    body: "Projet: {{project_name}} | Periode: {{period}}".into(),
-                },
-                TemplateSection {
-                    heading: "Termine".into(),
-                    body: "{{completed}}".into(),
-                },
-                TemplateSection {
-                    heading: "En cours".into(),
-                    body: "{{in_progress}}".into(),
-                },
-                TemplateSection {
-                    heading: "Bloque".into(),
-                    body: "{{blocked}}".into(),
-                },
-                TemplateSection {
-                    heading: "Prochaines etapes".into(),
-                    body: "{{next_steps}}".into(),
-                },
-            ],
-        ),
-        "it" => (
-            "Stato settimanale",
-            vec![
-                TemplateSection {
-                    heading: "Riepilogo".into(),
-                    body: "Progetto: {{project_name}} | Periodo: {{period}}".into(),
-                },
-                TemplateSection {
-                    heading: "Completato".into(),
-                    body: "{{completed}}".into(),
-                },
-                TemplateSection {
-                    heading: "In corso".into(),
-                    body: "{{in_progress}}".into(),
-                },
-                TemplateSection {
-                    heading: "Bloccato".into(),
-                    body: "{{blocked}}".into(),
-                },
-                TemplateSection {
-                    heading: "Prossimi passi".into(),
-                    body: "{{next_steps}}".into(),
-                },
-            ],
-        ),
-        _ => (
-            "Weekly Status",
-            vec![
-                TemplateSection {
-                    heading: "Summary".into(),
-                    body: "Project: {{project_name}} | Period: {{period}}".into(),
-                },
-                TemplateSection {
-                    heading: "Completed".into(),
-                    body: "{{completed}}".into(),
-                },
-                TemplateSection {
-                    heading: "In Progress".into(),
-                    body: "{{in_progress}}".into(),
-                },
-                TemplateSection {
-                    heading: "Blocked".into(),
-                    body: "{{blocked}}".into(),
-                },
-                TemplateSection {
-                    heading: "Next Steps".into(),
-                    body: "{{next_steps}}".into(),
-                },
-            ],
-        ),
-    };
-    ReportTemplate {
-        name: name.into(),
-        sections,
-        format: ReportFormat::Markdown,
-    }
+    load_template("weekly_status", lang)
 }
 
 /// Return the built-in sprint review template for the given language.
 pub fn sprint_review_template(lang: &str) -> ReportTemplate {
-    let (name, sections) = match lang {
-        "de" => (
-            "Sprint-Uebersicht",
-            vec![
-                TemplateSection {
-                    heading: "Sprint".into(),
-                    body: "{{sprint_dates}}".into(),
-                },
-                TemplateSection {
-                    heading: "Erledigt".into(),
-                    body: "{{completed}}".into(),
-                },
-                TemplateSection {
-                    heading: "In Bearbeitung".into(),
-                    body: "{{in_progress}}".into(),
-                },
-                TemplateSection {
-                    heading: "Blockiert".into(),
-                    body: "{{blocked}}".into(),
-                },
-                TemplateSection {
-                    heading: "Velocity".into(),
-                    body: "{{velocity}}".into(),
-                },
-            ],
-        ),
-        "fr" => (
-            "Revue de sprint",
-            vec![
-                TemplateSection {
-                    heading: "Sprint".into(),
-                    body: "{{sprint_dates}}".into(),
-                },
-                TemplateSection {
-                    heading: "Termine".into(),
-                    body: "{{completed}}".into(),
-                },
-                TemplateSection {
-                    heading: "En cours".into(),
-                    body: "{{in_progress}}".into(),
-                },
-                TemplateSection {
-                    heading: "Bloque".into(),
-                    body: "{{blocked}}".into(),
-                },
-                TemplateSection {
-                    heading: "Velocite".into(),
-                    body: "{{velocity}}".into(),
-                },
-            ],
-        ),
-        "it" => (
-            "Revisione sprint",
-            vec![
-                TemplateSection {
-                    heading: "Sprint".into(),
-                    body: "{{sprint_dates}}".into(),
-                },
-                TemplateSection {
-                    heading: "Completato".into(),
-                    body: "{{completed}}".into(),
-                },
-                TemplateSection {
-                    heading: "In corso".into(),
-                    body: "{{in_progress}}".into(),
-                },
-                TemplateSection {
-                    heading: "Bloccato".into(),
-                    body: "{{blocked}}".into(),
-                },
-                TemplateSection {
-                    heading: "Velocita".into(),
-                    body: "{{velocity}}".into(),
-                },
-            ],
-        ),
-        _ => (
-            "Sprint Review",
-            vec![
-                TemplateSection {
-                    heading: "Sprint".into(),
-                    body: "{{sprint_dates}}".into(),
-                },
-                TemplateSection {
-                    heading: "Completed".into(),
-                    body: "{{completed}}".into(),
-                },
-                TemplateSection {
-                    heading: "In Progress".into(),
-                    body: "{{in_progress}}".into(),
-                },
-                TemplateSection {
-                    heading: "Blocked".into(),
-                    body: "{{blocked}}".into(),
-                },
-                TemplateSection {
-                    heading: "Velocity".into(),
-                    body: "{{velocity}}".into(),
-                },
-            ],
-        ),
-    };
-    ReportTemplate {
-        name: name.into(),
-        sections,
-        format: ReportFormat::Markdown,
-    }
+    load_template("sprint_review", lang)
 }
 
 /// Return the built-in risk register template for the given language.
 pub fn risk_register_template(lang: &str) -> ReportTemplate {
-    let (name, sections) = match lang {
-        "de" => (
-            "Risikoregister",
-            vec![
-                TemplateSection {
-                    heading: "Projekt".into(),
-                    body: "{{project_name}}".into(),
-                },
-                TemplateSection {
-                    heading: "Risiken".into(),
-                    body: "{{risks}}".into(),
-                },
-                TemplateSection {
-                    heading: "Massnahmen".into(),
-                    body: "{{mitigations}}".into(),
-                },
-            ],
-        ),
-        "fr" => (
-            "Registre des risques",
-            vec![
-                TemplateSection {
-                    heading: "Projet".into(),
-                    body: "{{project_name}}".into(),
-                },
-                TemplateSection {
-                    heading: "Risques".into(),
-                    body: "{{risks}}".into(),
-                },
-                TemplateSection {
-                    heading: "Mesures".into(),
-                    body: "{{mitigations}}".into(),
-                },
-            ],
-        ),
-        "it" => (
-            "Registro dei rischi",
-            vec![
-                TemplateSection {
-                    heading: "Progetto".into(),
-                    body: "{{project_name}}".into(),
-                },
-                TemplateSection {
-                    heading: "Rischi".into(),
-                    body: "{{risks}}".into(),
-                },
-                TemplateSection {
-                    heading: "Mitigazioni".into(),
-                    body: "{{mitigations}}".into(),
-                },
-            ],
-        ),
-        _ => (
-            "Risk Register",
-            vec![
-                TemplateSection {
-                    heading: "Project".into(),
-                    body: "{{project_name}}".into(),
-                },
-                TemplateSection {
-                    heading: "Risks".into(),
-                    body: "{{risks}}".into(),
-                },
-                TemplateSection {
-                    heading: "Mitigations".into(),
-                    body: "{{mitigations}}".into(),
-                },
-            ],
-        ),
-    };
-    ReportTemplate {
-        name: name.into(),
-        sections,
-        format: ReportFormat::Markdown,
-    }
+    load_template("risk_register", lang)
 }
 
 /// Return the built-in milestone report template for the given language.
 pub fn milestone_report_template(lang: &str) -> ReportTemplate {
-    let (name, sections) = match lang {
-        "de" => (
-            "Meilensteinbericht",
-            vec![
-                TemplateSection {
-                    heading: "Projekt".into(),
-                    body: "{{project_name}}".into(),
-                },
-                TemplateSection {
-                    heading: "Meilensteine".into(),
-                    body: "{{milestones}}".into(),
-                },
-                TemplateSection {
-                    heading: "Status".into(),
-                    body: "{{status}}".into(),
-                },
-            ],
-        ),
-        "fr" => (
-            "Rapport de jalons",
-            vec![
-                TemplateSection {
-                    heading: "Projet".into(),
-                    body: "{{project_name}}".into(),
-                },
-                TemplateSection {
-                    heading: "Jalons".into(),
-                    body: "{{milestones}}".into(),
-                },
-                TemplateSection {
-                    heading: "Statut".into(),
-                    body: "{{status}}".into(),
-                },
-            ],
-        ),
-        "it" => (
-            "Report milestone",
-            vec![
-                TemplateSection {
-                    heading: "Progetto".into(),
-                    body: "{{project_name}}".into(),
-                },
-                TemplateSection {
-                    heading: "Milestone".into(),
-                    body: "{{milestones}}".into(),
-                },
-                TemplateSection {
-                    heading: "Stato".into(),
-                    body: "{{status}}".into(),
-                },
-            ],
-        ),
-        _ => (
-            "Milestone Report",
-            vec![
-                TemplateSection {
-                    heading: "Project".into(),
-                    body: "{{project_name}}".into(),
-                },
-                TemplateSection {
-                    heading: "Milestones".into(),
-                    body: "{{milestones}}".into(),
-                },
-                TemplateSection {
-                    heading: "Status".into(),
-                    body: "{{status}}".into(),
-                },
-            ],
-        ),
-    };
-    ReportTemplate {
-        name: name.into(),
-        sections,
-        format: ReportFormat::Markdown,
-    }
+    load_template("milestone_report", lang)
 }
 
 /// High-level template rendering function.
 ///
 /// Returns the rendered template as a string or an error if the template
-/// or language is not supported.
+/// is not supported.
 #[allow(clippy::implicit_hasher)]
 pub fn render_template(
     template_name: &str,
@@ -486,10 +290,9 @@ pub fn render_template(
     vars: &HashMap<String, String>,
 ) -> anyhow::Result<String> {
     let tpl = match template_name {
-        "weekly_status" => weekly_status_template(language),
-        "sprint_review" => sprint_review_template(language),
-        "risk_register" => risk_register_template(language),
-        "milestone_report" => milestone_report_template(language),
+        "weekly_status" | "sprint_review" | "risk_register" | "milestone_report" => {
+            load_template(template_name, language)
+        }
         _ => anyhow::bail!("unsupported template: {}", template_name),
     };
     Ok(tpl.render(vars))
@@ -598,5 +401,14 @@ mod tests {
         vars.insert("x".into(), "1".into());
         let result = substitute("{{x}} and {{x}}", &vars);
         assert_eq!(result, "1 and 1");
+    }
+
+    #[test]
+    fn unsupported_locale_falls_back_to_english() {
+        let tpl = weekly_status_template("xx");
+        let vars = HashMap::new();
+        let rendered = tpl.render(&vars);
+        assert!(rendered.contains("## Summary"));
+        assert!(rendered.contains("## Completed"));
     }
 }
