@@ -15,7 +15,11 @@ const POLL_INTERVAL: Duration = Duration::from_secs(5);
 /// scripts in the WebView context. The token is escaped to prevent injection.
 fn inject_token<R: Runtime>(app: &AppHandle<R>, token: &str) {
     if let Some(window) = app.get_webview_window("main") {
-        let escaped = token.replace('\\', "\\\\").replace('\'', "\\'");
+        let escaped = token
+            .replace('\\', "\\\\")
+            .replace('\'', "\\'")
+            .replace('\n', "\\n")
+            .replace('\r', "\\r");
         // Tauri's eval() is the documented API for WebView scripting.
         let script = format!("localStorage.setItem('zeroclaw_token', '{escaped}')");
         let _ = window.eval(&script);

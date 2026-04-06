@@ -53,7 +53,7 @@ pub fn spawn_config_watcher(state: AppState, config_path: PathBuf) {
     });
 }
 
-fn file_mtime(path: &PathBuf) -> Option<SystemTime> {
+fn file_mtime(path: &std::path::Path) -> Option<SystemTime> {
     std::fs::metadata(path).ok().and_then(|m| m.modified().ok())
 }
 
@@ -65,15 +65,15 @@ mod tests {
 
     #[test]
     fn file_mtime_returns_none_for_missing_file() {
-        let path = PathBuf::from("/tmp/zeroclaw_nonexistent_config_test.toml");
-        assert!(file_mtime(&path).is_none());
+        let path = std::path::Path::new("/tmp/zeroclaw_nonexistent_config_test.toml");
+        assert!(file_mtime(path).is_none());
     }
 
     #[test]
     fn file_mtime_returns_some_for_existing_file() {
         let mut tmp = NamedTempFile::new().unwrap();
         writeln!(tmp, "test = true").unwrap();
-        let mtime = file_mtime(&tmp.path().to_path_buf());
+        let mtime = file_mtime(tmp.path());
         assert!(mtime.is_some());
     }
 
@@ -81,14 +81,14 @@ mod tests {
     fn file_mtime_changes_on_write() {
         let mut tmp = NamedTempFile::new().unwrap();
         writeln!(tmp, "v1").unwrap();
-        let m1 = file_mtime(&tmp.path().to_path_buf());
+        let m1 = file_mtime(tmp.path());
 
         // Brief sleep to ensure distinct mtime on filesystems with 1s granularity
         std::thread::sleep(Duration::from_millis(1100));
 
         writeln!(tmp, "v2").unwrap();
         tmp.flush().unwrap();
-        let m2 = file_mtime(&tmp.path().to_path_buf());
+        let m2 = file_mtime(tmp.path());
 
         assert_ne!(m1, m2);
     }

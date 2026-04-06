@@ -305,6 +305,9 @@ const HARDWARE_MODES: &[(&str, &str)] = &[
     ("Probe", "Debug probe (STM32, nRF, etc.)"),
 ];
 
+/// Config keys for each TUNNEL_PROVIDERS entry (same order).
+const TUNNEL_IDS: &[&str] = &["none", "cloudflare", "tailscale", "ngrok", "custom"];
+
 const MEMORY_BACKENDS: &[(&str, &str)] = &[
     ("SQLite", "Persistent structured memory (recommended)"),
     ("Lucid", "Conversational RAG memory"),
@@ -393,7 +396,6 @@ struct App {
     // Hardware
     hardware_mode_idx: usize,
     hardware_serial_port_input: String,
-    hardware_baud_rate_idx: usize,
     hardware_probe_target_input: String,
 
     // Memory
@@ -458,7 +460,6 @@ impl App {
             secrets_encrypt: true,
             hardware_mode_idx: 0,
             hardware_serial_port_input: String::new(),
-            hardware_baud_rate_idx: 3, // 115200
             hardware_probe_target_input: String::new(),
             memory_backend_idx: 0, // sqlite
             memory_auto_save: true,
@@ -1134,8 +1135,7 @@ fn apply_tui_selections_to_config(app: &App, config: &mut Config) {
         config.workspace_dir = std::path::PathBuf::from(&app.workspace_dir_input);
 
         // Tunnel
-        let tunnel_ids = ["none", "cloudflare", "tailscale", "ngrok", "custom"];
-        let tunnel_id = tunnel_ids
+        let tunnel_id = TUNNEL_IDS
             .get(app.tunnel_provider_idx)
             .copied()
             .unwrap_or("none");
@@ -3932,7 +3932,7 @@ fn render_project_context(frame: &mut Frame, area: Rect, app: &App) {
     );
 
     let fields = [
-        ("Your name", app.user_name_input.as_str()),
+        ("Display name", app.user_name_input.as_str()),
         ("Agent name", app.agent_name_input.as_str()),
         (
             "Timezone",
@@ -4021,7 +4021,6 @@ mod tests {
             secrets_encrypt: true,
             hardware_mode_idx: 0,
             hardware_serial_port_input: String::new(),
-            hardware_baud_rate_idx: 3,
             hardware_probe_target_input: String::new(),
             memory_backend_idx: 0,
             memory_auto_save: true,
@@ -4992,5 +4991,42 @@ mod tests {
         assert!(workspace.join("SOUL.md").exists());
         assert!(workspace.join("USER.md").exists());
         assert!(workspace.join("IDENTITY.md").exists());
+    }
+
+    // ------------------------------------------------------------------
+    // Constant sync assertions (finding #3 from review)
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn memory_backends_constant_matches_canonical_list() {
+        let canonical = crate::memory::backend::selectable_memory_backends();
+        assert_eq!(
+            MEMORY_BACKENDS.len(),
+            canonical.len(),
+            "MEMORY_BACKENDS has {} entries but selectable_memory_backends() has {}",
+            MEMORY_BACKENDS.len(),
+            canonical.len(),
+        );
+        // Verify display names start with the canonical key (case-insensitive).
+        for (tui, profile) in MEMORY_BACKENDS.iter().zip(canonical.iter()) {
+            assert!(
+                tui.0.to_lowercase().starts_with(&profile.key.to_lowercase())
+                    || profile.key == "none" && tui.0 == "None",
+                "TUI label {:?} does not match canonical key {:?}",
+                tui.0,
+                profile.key,
+            );
+        }
+    }
+
+    #[test]
+    fn tunnel_ids_matches_tunnel_providers_len() {
+        assert_eq!(
+            TUNNEL_IDS.len(),
+            TUNNEL_PROVIDERS.len(),
+            "TUNNEL_IDS ({}) and TUNNEL_PROVIDERS ({}) must have the same length",
+            TUNNEL_IDS.len(),
+            TUNNEL_PROVIDERS.len(),
+        );
     }
 }
