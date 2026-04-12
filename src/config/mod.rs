@@ -1,10 +1,9 @@
-pub mod migration;
-pub mod providers;
+pub use zeroclaw_config::migration;
+pub use zeroclaw_config::providers;
 pub mod schema;
 pub mod traits;
 pub mod workspace;
 
-#[allow(unused_imports)]
 pub use schema::{
     AgentConfig, AssemblyAiSttConfig, AuditConfig, AutonomyConfig, BackupConfig,
     BrowserComputerUseConfig, BrowserConfig, BuiltinHooksConfig, ChannelsConfig,
