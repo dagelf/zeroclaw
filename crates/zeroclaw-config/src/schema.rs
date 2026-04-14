@@ -7164,11 +7164,19 @@ pub struct MatrixConfig {
     /// Delay (ms) between sending each paragraph in MultiMessage mode.
     #[serde(default = "default_multi_message_delay_ms")]
     pub multi_message_delay_ms: u64,
+    /// When true, only respond to messages that @-mention the bot in groups.
+    /// Direct messages are always processed.
+    #[serde(default)]
+    pub mention_only: bool,
     /// Optional Matrix recovery key for automatic E2EE key backup restore.
     /// When set, ZeroClaw recovers room keys and cross-signing secrets on startup.
     #[secret]
     #[serde(default)]
     pub recovery_key: Option<String>,
+    /// Optional login password for Matrix account (used for initial login flow).
+    #[secret]
+    #[serde(default)]
+    pub password: Option<String>,
 }
 
 impl ChannelConfig for MatrixConfig {
@@ -12656,6 +12664,8 @@ default_temperature = 0.7
             draft_update_interval_ms: 1500,
             multi_message_delay_ms: 800,
             recovery_key: None,
+            mention_only: false,
+            password: None,
         };
         let json = serde_json::to_string(&mc).unwrap();
         let parsed: MatrixConfig = serde_json::from_str(&json).unwrap();
@@ -12685,6 +12695,8 @@ default_temperature = 0.7
             draft_update_interval_ms: 1500,
             multi_message_delay_ms: 800,
             recovery_key: None,
+            mention_only: false,
+            password: None,
         };
         let toml_str = toml::to_string(&mc).unwrap();
         let parsed: MatrixConfig = toml::from_str(&toml_str).unwrap();
@@ -12789,6 +12801,8 @@ allowed_rooms = ["!ops:matrix.org"]
                 draft_update_interval_ms: 1500,
                 multi_message_delay_ms: 800,
                 recovery_key: None,
+                mention_only: false,
+                password: None,
             }),
             signal: None,
             whatsapp: None,
@@ -16617,14 +16631,18 @@ auto_approve = ["file_read", "file_write", "file_edit", "memory_recall", "memory
             draft_update_interval_ms: 1500,
             multi_message_delay_ms: 800,
             recovery_key: None,
+            mention_only: false,
+            password: None,
         };
         let fields = mx.secret_fields();
-        assert_eq!(fields.len(), 2);
+        assert_eq!(fields.len(), 3);
         assert_eq!(fields[0].name, "channels.matrix.access-token");
         assert_eq!(fields[0].category, "Channels");
         assert!(fields[0].is_set);
         assert_eq!(fields[1].name, "channels.matrix.recovery-key");
         assert!(!fields[1].is_set);
+        assert_eq!(fields[2].name, "channels.matrix.password");
+        assert!(!fields[2].is_set);
     }
 
     #[test]
@@ -16642,6 +16660,8 @@ auto_approve = ["file_read", "file_write", "file_edit", "memory_recall", "memory
             draft_update_interval_ms: 1500,
             multi_message_delay_ms: 800,
             recovery_key: None,
+            mention_only: false,
+            password: None,
         };
         let fields = mx.secret_fields();
         assert!(!fields[0].is_set);
@@ -16662,6 +16682,8 @@ auto_approve = ["file_read", "file_write", "file_edit", "memory_recall", "memory
             draft_update_interval_ms: 1500,
             multi_message_delay_ms: 800,
             recovery_key: None,
+            mention_only: false,
+            password: None,
         };
         mx.set_secret("channels.matrix.access-token", "new-token".into())
             .unwrap();
@@ -16683,6 +16705,8 @@ auto_approve = ["file_read", "file_write", "file_edit", "memory_recall", "memory
             draft_update_interval_ms: 1500,
             multi_message_delay_ms: 800,
             recovery_key: None,
+            mention_only: false,
+            password: None,
         };
         assert!(
             mx.set_secret("channels.matrix.nonexistent", "val".into())
@@ -16721,6 +16745,8 @@ auto_approve = ["file_read", "file_write", "file_edit", "memory_recall", "memory
             draft_update_interval_ms: 1500,
             multi_message_delay_ms: 800,
             recovery_key: None,
+            mention_only: false,
+            password: None,
         });
 
         let fields = config.secret_fields();
@@ -16745,6 +16771,8 @@ auto_approve = ["file_read", "file_write", "file_edit", "memory_recall", "memory
             draft_update_interval_ms: 1500,
             multi_message_delay_ms: 800,
             recovery_key: None,
+            mention_only: false,
+            password: None,
         });
 
         config
@@ -16807,6 +16835,8 @@ auto_approve = ["file_read", "file_write", "file_edit", "memory_recall", "memory
             draft_update_interval_ms: 1500,
             multi_message_delay_ms: 800,
             recovery_key: None,
+            mention_only: false,
+            password: None,
         };
 
         // Encrypt
@@ -16837,6 +16867,8 @@ auto_approve = ["file_read", "file_write", "file_edit", "memory_recall", "memory
             draft_update_interval_ms: 1500,
             multi_message_delay_ms: 800,
             recovery_key: None,
+            mention_only: false,
+            password: None,
         };
 
         mx.encrypt_secrets(&store).unwrap();
@@ -16865,6 +16897,8 @@ auto_approve = ["file_read", "file_write", "file_edit", "memory_recall", "memory
             draft_update_interval_ms: 1500,
             multi_message_delay_ms: 800,
             recovery_key: None,
+            mention_only: false,
+            password: None,
         };
 
         mx.encrypt_secrets(&store).unwrap();
@@ -16888,6 +16922,8 @@ auto_approve = ["file_read", "file_write", "file_edit", "memory_recall", "memory
             draft_update_interval_ms: 1500,
             multi_message_delay_ms: 800,
             recovery_key: None,
+            mention_only: false,
+            password: None,
         }
     }
 
